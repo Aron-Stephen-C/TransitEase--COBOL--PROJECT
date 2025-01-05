@@ -1,0 +1,9 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. main.
+
+       ENVIRONMENT DIVISION.
+       
+       DATA DIVISION.
+
+       PROCEDURE DIVISION.
+           STOP RUN.
