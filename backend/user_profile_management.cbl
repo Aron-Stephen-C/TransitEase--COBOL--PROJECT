@@ -31,7 +31,12 @@
            02    FS-P-TIME-STAMP.
                03    FS-P-DATE    PIC 99/99/99.
                03    FS-P-FILLER-SPACE    PIC X(3).
-               03    FS-P-TIME    PIC 99/99/99.
+               03    FS-P-TIME.
+                   04    FS-P-HOUR    PIC 99.
+                   04    FS-P-COLON-1    PIC X.
+                   04    FS-P-MINUTES    PIC 99.
+                   04    FS-P-COLON-2    PIC X.
+                   04    FS-P-SECOND    PIC 99.
        FD  FS-ADMIN-FILE.
        01  FS-ADMIN-RECORD.
            02    FS-A-USER-ID    PIC X(15).
@@ -44,7 +49,12 @@
            02    FS-A-TIME-STAMP.
                03    FS-A-DATE    PIC 99/99/99.
                03    FS-A-FILLER-SPACE    PIC X(3).
-               03    FS-A-TIME    PIC 99/99/99.
+               03    FS-A-TIME.
+                   04    FS-A-HOUR    PIC 99.
+                   04    FS-A-COLON-1    PIC X.
+                   04    FS-A-MINUTES    PIC 99.
+                   04    FS-A-COLON-2    PIC X.
+                   04    FS-A-SECOND    PIC 99.
        
        WORKING-STORAGE SECTION.
        01  WS-DATE    PIC 9(6).
@@ -72,14 +82,19 @@
            02    WS-TIME-STAMP.
                03    WS-TS-DATE    PIC 99/99/99.
                03    WS-TS-FILLER-SPACE    PIC X(3) VALUE SPACES.
-               03    WS-TS-TIME    PIC 99/99/99.
+               03    WS-TS-TIME.
+                   04    WS-TS-HOUR    PIC 99.
+                   04    WS-TS-COLON-1    PIC X VALUE ':'.
+                   04    WS-TS-MINUTES    PIC 99.
+                   04    WS-TS-COLON-2    PIC X VALUE ':'.
+                   04    WS-TS-SECOND    PIC 99.
        
        LINKAGE SECTION.
        
        
        PROCEDURE DIVISION.
-           MOVE 'ARON2' TO WS-FIRST-NAME
-           MOVE 'CORDOVA' TO WS-LAST-NAME
+           MOVE 'Joshua' TO WS-FIRST-NAME
+           MOVE 'Billones' TO WS-LAST-NAME
            MOVE 'aronstephenscordova@gmail.com' TO WS-EMAIL
            MOVE 'AronPogi' TO WS-PASSWORD
            MOVE '09617036455'TO WS-PHONE-NUMBER
@@ -101,7 +116,24 @@
                PERFORM UNTIL WS-EOF = 'Y'
                    READ FS-PASSENGER-FILE NEXT RECORD
                        AT END MOVE 'Y' TO WS-EOF
-                       NOT AT END DISPLAY FS-P-FIRST-NAME
+                       NOT AT END 
+                           DISPLAY FS-P-FIRST-NAME
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-LAST-NAME
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-EMAIL
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-PASSWORD
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-PHONE-NUMBER
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-ROLE
+                           DISPLAY '---------------------------------'
+                           DISPLAY FS-P-TIME-STAMP
+                           DISPLAY ' '
+                           DISPLAY '*********************************'
+                           DISPLAY ' '
+                           
                    END-READ
                END-PERFORM
                
@@ -148,7 +180,6 @@
 
        
            IF WS-LAST-GENERATED-ID NOT EQUAL TO SPACES THEN
-               DISPLAY WS-L-INCREMENT-VALUE
                MOVE WS-L-INCREMENT-VALUE TO WS-INCREMENT-VALUE
                ADD 1 TO WS-INCREMENT-VALUE
            ELSE 
@@ -159,7 +190,6 @@
            
            MOVE WS-GENERATED-USER-ID TO WS-USER-ID
 
-           DISPLAY WS-USER-ID
        
            PERFORM GENERATE-TIME-STAMP
        
@@ -203,5 +233,7 @@
        GENERATE-TIME-STAMP.
            ACCEPT WS-TS-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
-           MOVE WS-TIME(1:6) TO WS-TS-TIME
+           MOVE WS-TIME(1:2) TO WS-TS-HOUR
+           MOVE WS-TIME(3:2) TO WS-TS-MINUTES
+           MOVE WS-TIME(5:2) TO WS-TS-SECOND
            .

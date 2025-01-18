@@ -1,10 +1,11 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. test_cobol_file_for_sending_email.
+       PROGRAM-ID. send_email.
+       
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT OTP-FILE ASSIGN TO "otp.txt"
+           SELECT OTP-FILE ASSIGN TO "data/otp.txt"
            ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
@@ -14,16 +15,14 @@
 
        WORKING-STORAGE SECTION.
        01 WS-EMAIL PIC X(100).
-       01 WS-COMMAND PIC X(200).
+       01 WS-COMMAND PIC X(300).
        01 WS-RETURN-CODE PIC 9(2).
 
        PROCEDURE DIVISION.
        MAIN-LOGIC.
-      *    DISPLAY "Enter recipient email: " WITH NO ADVANCING.
-      *    ACCEPT WS-EMAIL.
            MOVE 'aronstephenscordova@gmail.com' TO WS-EMAIL
 
-           STRING "python3 python_script_for_email.py " WS-EMAIL
+           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
                   DELIMITED BY SIZE INTO WS-COMMAND.
 
            CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE.

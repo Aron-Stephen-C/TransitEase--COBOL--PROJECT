@@ -9,9 +9,9 @@ def send_otp_for_email_validation(user_email_address):
         
         otp = f"{random.randint(0, 999999):06d}"
 
-        sender_email = "filmcurator2024@gmail.com"
+        sender_email = "TransitEase2025@gmail.com"
 
-        with open('data/account_password.pkl', 'rb') as file:
+        with open('data/app_password.pkl', 'rb') as file:
             sender_password = pickle.load(file)
 
         subject = "Email Verification"
@@ -33,9 +33,8 @@ def send_otp_for_email_validation(user_email_address):
         except Exception as e:
             print(f"Error sending email: {e}")
 
-        with open('otp.txt', 'w') as file:
-            file.write(otp)
-             
+        with open('data/otp.txt', 'w') as file:
+            file.write(otp)           
 
 if __name__ == "__main__":
     recipient_email = sys.argv[1]
