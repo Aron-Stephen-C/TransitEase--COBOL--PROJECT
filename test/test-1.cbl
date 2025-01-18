@@ -1,7 +1,8 @@
       * This is the module that Manages user records
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. customer_profile_management.
+       PROGRAM-ID. test-1.
        
+
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
@@ -45,7 +46,7 @@
                03    FS-A-DATE    PIC 99/99/99.
                03    FS-A-FILLER-SPACE    PIC X(3).
                03    FS-A-TIME    PIC 99/99/99.
-       
+      
        WORKING-STORAGE SECTION.
        01  WS-DATE    PIC 9(6).
        01  WS-TIME    PIC 9(8).
@@ -68,17 +69,17 @@
            02    WS-EMAIL    PIC X(100).
            02    WS-PASSWORD    PIC X(255).
            02    WS-PHONE-NUMBER    PIC X(11).
-           02    WS-ROLE    PIC X(9).
+           02    WS-ROLE    PIC X(5).
            02    WS-TIME-STAMP.
                03    WS-TS-DATE    PIC 99/99/99.
                03    WS-TS-FILLER-SPACE    PIC X(3) VALUE SPACES.
                03    WS-TS-TIME    PIC 99/99/99.
-       
+
        LINKAGE SECTION.
-       
-       
+
+
        PROCEDURE DIVISION.
-           MOVE 'ARON2' TO WS-FIRST-NAME
+           MOVE 'ARON' TO WS-FIRST-NAME
            MOVE 'CORDOVA' TO WS-LAST-NAME
            MOVE 'aronstephenscordova@gmail.com' TO WS-EMAIL
            MOVE 'AronPogi' TO WS-PASSWORD
@@ -86,53 +87,23 @@
            MOVE 'Passenger' TO WS-ROLE
        
            PERFORM CHECK-FILE-STATUS
-      *    PERFORM RECORD-PASSENGER
-      *    PERFORM SEARCH-USER
-           PERFORM TRAVERSE-FILE
+           PERFORM RECORD-PASSENGER
 
-       
            STOP RUN.
 
-
-       TRAVERSE-FILE.
-           MOVE LOW-VALUES TO FS-P-USER-ID
-           MOVE SPACES TO WS-EOF
-           OPEN I-O FS-PASSENGER-FILE
-               PERFORM UNTIL WS-EOF = 'Y'
-                   READ FS-PASSENGER-FILE NEXT RECORD
-                       AT END MOVE 'Y' TO WS-EOF
-                       NOT AT END DISPLAY FS-P-FIRST-NAME
-                   END-READ
-               END-PERFORM
-               
-           CLOSE FS-PASSENGER-FILE
-           .
-       
-       SEARCH-USER.
-           OPEN I-O FS-PASSENGER-FILE
-           MOVE 250118145939003 TO FS-P-USER-ID
-           READ FS-PASSENGER-FILE
-               INVALID KEY DISPLAY 'NOT FOUND'
-               NOT INVALID KEY DISPLAY 'FOUND'
-               DISPLAY FS-PASSENGER-RECORD
-           END-READ
-           CLOSE FS-PASSENGER-FILE
-           .
-       
        RECORD-ADMIN.
       *    Fetch Last Generated ID (Para sa incremententation)
            MOVE SPACES TO WS-EOF
            .
-       
+
        RECORD-PASSENGER.
       *    Fetch Last Generated ID (Para sa incremententation)
            MOVE SPACES TO WS-EOF
            MOVE ZEROES TO WS-INCREMENT-VALUE
-           MOVE LOW-VALUES TO FS-P-USER-ID
-       
            OPEN I-O FS-PASSENGER-FILE
-       
+
            START FS-PASSENGER-FILE KEY IS GREATER THAN FS-P-USER-ID
+
            READ FS-PASSENGER-FILE NEXT RECORD
                AT END MOVE 1 TO WS-INCREMENT-VALUE    
                NOT AT END 
@@ -146,9 +117,7 @@
                    END-PERFORM
            END-READ
 
-       
-           IF WS-LAST-GENERATED-ID NOT EQUAL TO SPACES THEN
-               DISPLAY WS-L-INCREMENT-VALUE
+           IF WS-LAST-GENERATED-ID NOT EQUAL TO SPACES
                MOVE WS-L-INCREMENT-VALUE TO WS-INCREMENT-VALUE
                ADD 1 TO WS-INCREMENT-VALUE
            ELSE 
@@ -156,21 +125,21 @@
            END-IF
            
            PERFORM GENERATE-ID-SEQUENCE
-           
-           MOVE WS-GENERATED-USER-ID TO WS-USER-ID
 
-           DISPLAY WS-USER-ID
-       
+           MOVE WS-GENERATED-USER-ID TO FS-P-USER-ID
+
+           DISPLAY WS-GENERATED-USER-ID
+
            PERFORM GENERATE-TIME-STAMP
-       
+
            MOVE WS-USER-RECORD TO FS-PASSENGER-RECORD
-       
+
            WRITE FS-PASSENGER-RECORD
            END-WRITE
-       
+
            CLOSE FS-PASSENGER-FILE
            .
-       
+
        CHECK-FILE-STATUS.
            OPEN I-O FS-PASSENGER-FILE
            IF WS-FILE-STATUS NOT = '00'
@@ -182,7 +151,7 @@
            CLOSE FS-PASSENGER-FILE
            MOVE SPACES TO WS-FILE-STATUS
            OPEN I-O FS-ADMIN-FILE
-       
+
            IF WS-FILE-STATUS NOT = '00'
                OPEN OUTPUT FS-ADMIN-FILE
                IF WS-FILE-STATUS NOT = '00'
@@ -192,16 +161,18 @@
            CLOSE FS-ADMIN-FILE
            .
            
-       
+
        GENERATE-ID-SEQUENCE.
            ACCEPT WS-GSI-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
            MOVE WS-TIME(1:6) TO WS-GSI-TIME
            MOVE WS-INCREMENT-VALUE TO WS-GSI-INCREMENT-VALUE
            .
-       
+
        GENERATE-TIME-STAMP.
            ACCEPT WS-TS-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
            MOVE WS-TIME(1:6) TO WS-TS-TIME
            .
+
+           
