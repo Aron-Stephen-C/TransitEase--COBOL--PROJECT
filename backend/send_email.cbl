@@ -14,9 +14,10 @@
        01  OTP-RECORD PIC X(6).
 
        WORKING-STORAGE SECTION.
-       01 WS-EMAIL PIC X(100).
-       01 WS-COMMAND PIC X(300).
-       01 WS-RETURN-CODE PIC 9(2).
+       01  WS-EMAIL PIC X(100).
+       01  WS-COMMAND PIC X(300).
+       01  WS-RETURN-CODE PIC 9(2).
+       01  WS-OTP    PIC X(6).
 
        PROCEDURE DIVISION.
        MAIN-LOGIC.
@@ -31,7 +32,17 @@
                OPEN INPUT OTP-FILE
                READ OTP-FILE INTO OTP-RECORD
                CLOSE OTP-FILE
-               DISPLAY "OTP sent successfully. OTP: " OTP-RECORD
+
+               DISPLAY 'Input OTP : ' WITH NO ADVANCING
+               ACCEPT WS-OTP
+
+               IF WS-OTP = OTP-RECORD THEN
+                   DISPLAY 'Success'
+               ELSE
+                   DISPLAY 'Womp womp'
+               END-IF
+               
+
            ELSE
                DISPLAY "Failed to send OTP."
            END-IF.

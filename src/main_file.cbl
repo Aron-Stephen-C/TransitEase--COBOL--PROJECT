@@ -24,14 +24,17 @@
            MOVE 'Aron Stephen' TO WS-FIRST-NAME
            MOVE 'Cordova' TO WS-LAST-NAME
            MOVE 'aronstephenscordova@gmail.com' TO WS-EMAIL
-           MOVE '12345678' TO WS-PASSWORD
+           MOVE 'aron1234' TO WS-PASSWORD
            MOVE '09617036455' TO WS-PHONE-NUMBER
-           MOVE 'P' TO WS-ROLE
+           MOVE 'A' TO WS-ROLE
 
 
            CALL 'backend/user_profile_management' USING WS-USER-RECORD
-           DISPLAY WS-PASSWORD
            STOP RUN.
+
+      *AUTHENTICATE.
+      *
+      *    .
 
        SAMPLE-TERMINAL.
            PERFORM UNTIL WS-CHOICE = '3'

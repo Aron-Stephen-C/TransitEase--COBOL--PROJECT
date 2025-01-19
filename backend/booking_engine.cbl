@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. reservation_engine.
+       PROGRAM-ID. booking_engine.
 
        ENVIRONMENT DIVISION.
        

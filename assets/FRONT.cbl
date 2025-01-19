@@ -31,7 +31,7 @@
       
            PERFORM MAIN-PAGE.
 
-       STOP RUN.
+           STOP RUN.
 
        MAIN-PAGE.
            CALL "SYSTEM" USING "clear"

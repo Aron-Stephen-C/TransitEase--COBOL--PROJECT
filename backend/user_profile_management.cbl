@@ -1,4 +1,4 @@
-      * This is the module that Manages user records
+      * This is the module that Manages User records
        IDENTIFICATION DIVISION.
        PROGRAM-ID. user_profile_management.
        
@@ -77,11 +77,11 @@
            02    WS-LGSI-DATE    PIC 9(6).
            02    WS-LGSI-TIME    PIC 9(6).
            02    WS-L-INCREMENT-VALUE    PIC 9(3).
+           
        01  WS-INCREMENT-VALUE PIC 9(3).
        01  WS-COMMAND             PIC X(255).
        01  WS-RETURN-CODE         PIC 9(4).
        01  WS-HASHED-PASSWORD    PIC X(64).
-      * Temporary use
 
        01  WS-USER-RECORD.
            02    WS-USER-ID    PIC X(15).
@@ -136,48 +136,6 @@
            MOVE WS-HASHED-PASSWORD TO LS-PASSWORD
            MOVE LS-PHONE-NUMBER TO WS-PHONE-NUMBER
            MOVE LS-ROLE TO WS-ROLE
-           .
-
-       TRAVERSE-FILE.
-           MOVE LOW-VALUES TO FS-P-USER-ID
-           MOVE SPACES TO WS-EOF
-           OPEN I-O FS-PASSENGER-FILE
-               PERFORM UNTIL WS-EOF = 'Y'
-                   READ FS-PASSENGER-FILE NEXT RECORD
-                       AT END MOVE 'Y' TO WS-EOF
-                       NOT AT END 
-                           DISPLAY FS-P-FIRST-NAME
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-LAST-NAME
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-EMAIL
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-PASSWORD
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-PHONE-NUMBER
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-ROLE
-                           DISPLAY '---------------------------------'
-                           DISPLAY FS-P-TIME-STAMP
-                           DISPLAY ' '
-                           DISPLAY '*********************************'
-                           DISPLAY ' '
-                           
-                   END-READ
-               END-PERFORM
-               
-           CLOSE FS-PASSENGER-FILE
-           .
-       
-       SEARCH-USER.
-           OPEN I-O FS-PASSENGER-FILE
-           MOVE 250118145939003 TO FS-P-USER-ID
-           READ FS-PASSENGER-FILE
-               INVALID KEY DISPLAY 'NOT FOUND'
-               NOT INVALID KEY DISPLAY 'FOUND'
-               DISPLAY FS-PASSENGER-RECORD
-           END-READ
-           CLOSE FS-PASSENGER-FILE
            .
        
        RECORD-ADMIN.
@@ -270,6 +228,8 @@
            .
        
        CHECK-FILE-STATUS.
+           MOVE SPACES TO WS-FILE-STATUS
+      *    Check if File exist, and if it doesn't it will create one
            OPEN I-O FS-PASSENGER-FILE
            IF WS-FILE-STATUS NOT = '00'
                OPEN OUTPUT FS-PASSENGER-FILE
@@ -292,6 +252,7 @@
            
        
        GENERATE-ID-SEQUENCE.
+      *    Generates ID (Using DATE, TIME, and INCREMENT VALUE)
            ACCEPT WS-GSI-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
            MOVE WS-TIME(1:6) TO WS-GSI-TIME
@@ -299,6 +260,7 @@
            .
        
        GENERATE-TIME-STAMP.
+      *    Generates Time Stamp of Creation
            ACCEPT WS-TS-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
            MOVE WS-TIME(1:2) TO WS-TS-HOUR
@@ -307,6 +269,7 @@
            .
 
        HASH-PASSWORD.
+      *    Hashes password for security using python
            STRING "python3 backend/hash_password.py " 
                LS-PASSWORD DELIMITED BY SIZE INTO WS-COMMAND.
            CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE.
