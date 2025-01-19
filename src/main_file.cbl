@@ -10,8 +10,27 @@
        01  WS-CHOICE-A    PIC X.
        01  WS-BUFFER    PIC X.
 
+       01  WS-USER-RECORD.
+           02  WS-FIRST-NAME    PIC X(50).
+           02  WS-LAST-NAME    PIC X(50).
+           02  WS-EMAIL    PIC X(100).
+           02  WS-PASSWORD    PIC X(100).
+           02  WS-PHONE-NUMBER    PIC X(11).
+           02  WS-ROLE    PIC X.
+
+
        PROCEDURE DIVISION.
-           PERFORM SAMPLE-TERMINAL
+      *    PERFORM SAMPLE-TERMINAL
+           MOVE 'Aron Stephen' TO WS-FIRST-NAME
+           MOVE 'Cordova' TO WS-LAST-NAME
+           MOVE 'aronstephenscordova@gmail.com' TO WS-EMAIL
+           MOVE '12345678' TO WS-PASSWORD
+           MOVE '09617036455' TO WS-PHONE-NUMBER
+           MOVE 'P' TO WS-ROLE
+
+
+           CALL 'backend/user_profile_management' USING WS-USER-RECORD
+           DISPLAY WS-PASSWORD
            STOP RUN.
 
        SAMPLE-TERMINAL.
@@ -67,6 +86,8 @@
                        DISPLAY 'Error : Invalid Input'
                END-EVALUATE
            END-PERFORM.
+
+
 
        ADMIN-PAGE.
            PERFORM UNTIL WS-CHOICE-A = '3'
