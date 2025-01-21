@@ -7,7 +7,7 @@
 ---
 
 ### 🌟 Objective of **TRANSITEASE**
-- **Streamline Operations**: Automate and simplify the management of schedules, routes, and ticket pricing.
+- **Streamline Operations**: Automate and simplify the management of schedules, routes, and ticket pricing.``
 - **Enhance Customer Experience**: Provide a seamless ticket booking, cancellation, and refund process for passengers.
 - **Optimize Resource Utilization**: Generate detailed occupancy reports to improve route planning and resource allocation.
 - **Increase Revenue Efficiency**: Minimize errors and fraudulent activities through secure and transparent transaction processes.

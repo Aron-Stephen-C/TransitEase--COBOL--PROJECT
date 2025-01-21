@@ -57,6 +57,4 @@
            END-IF
 
            
-       
-       STOP RUN.
-
+           STOP RUN.

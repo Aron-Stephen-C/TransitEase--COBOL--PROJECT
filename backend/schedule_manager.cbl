@@ -47,6 +47,7 @@
        01  FS-VEHICLES-RECORD.
            02    FS-VEHICLE-ID    PIC X(15).
            02    FS-VEHICLE-TYPE    PIC X.
+           02    FS-VEHICLE-CLASS    PIC X.
            02    FS-VEHICLE-CAPACITY    PIC 9(3).
            02    FS-VEHICLE-LICENSE-PLATE    PIC X(20).
            02    FS-VEHICLE-PRICE-FACTOR    PIC 9(19)V9(2).
@@ -63,8 +64,8 @@
        FD  FS-SCHEDULES-FILE.
        01  FS-SCHEDULES-RECORD.
            02    FS-SCHEDULE-ID    PIC X(15).
-           02    FS-S-ROUTE-ID    PIC X(15).
-           02    FS-S-VEHICLE-ID    PIC X(15).
+           02    FS-FK-ROUTE-ID    PIC X(15).
+           02    FS-FK-VEHICLE-ID    PIC X(15).
            02    FS-S-DEPARTURE-TIME.
                03    FS-S-D-DATE    PIC 99/99/99.
                03    FS-S-D-FILLER-SPACE    PIC X(3).
@@ -100,7 +101,7 @@
        01  WS-TIME    PIC    9(8).
        01  WS-INCREMENT-VALUE    PIC 9(3).
        01  WS-EOF    PIC X.
-       01  WS-GENERATED-USER-ID.
+       01  WS-GENERATED-ID.
            02    WS-GSI-DATE    PIC 9(6).
            02    WS-GSI-TIME    PIC 9(6).
            02    WS-GSI-INCREMENT-VALUE    PIC 9(3).
@@ -135,6 +136,7 @@
        01  WS-VEHICLES-RECORD.
            02    WS-VEHICLE-ID    PIC X(15).
            02    WS-VEHICLE-TYPE    PIC X.
+           02    WS-VEHICLE-CLASS    PIC X.
            02    WS-VEHICLE-CAPACITY    PIC 9(3).
            02    WS-VEHICLE-LICENSE-PLATE    PIC X(20).
            02    WS-VEHICLE-PRICE-FACTOR    PIC 9(19)V9(2).
@@ -149,8 +151,8 @@
                    04    WS-V-SECOND    PIC 99.
        01  WS-SCHEDULES-RECORD.
            02    WS-SCHEDULE-ID    PIC X(15).
-           02    WS-S-ROUTE-ID    PIC X(15).
-           02    WS-S-VEHICLE-ID    PIC X(15).
+           02    WS-FK-ROUTE-ID    PIC X(15).
+           02    WS-FK-VEHICLE-ID    PIC X(15).
            02    WS-S-DEPARTURE-TIME.
                03    WS-S-D-DATE    PIC 99/99/99.
                03    WS-S-D-FILLER-SPACE    PIC X(3).
@@ -263,7 +265,7 @@
            
            PERFORM GENERATE-ID-SEQUENCE
            
-           MOVE WS-GENERATED-USER-ID TO WS-ROUTE-ID
+           MOVE WS-GENERATED-ID TO WS-ROUTE-ID
 
            PERFORM GENERATE-TIME-STAMP
 
@@ -307,7 +309,7 @@
            
            PERFORM GENERATE-ID-SEQUENCE
            
-           MOVE WS-GENERATED-USER-ID TO WS-VEHICLE-ID
+           MOVE WS-GENERATED-ID TO WS-VEHICLE-ID
 
            PERFORM GENERATE-TIME-STAMP
 
@@ -351,7 +353,7 @@
            
            PERFORM GENERATE-ID-SEQUENCE
            
-           MOVE WS-GENERATED-USER-ID TO WS-SCHEDULE-ID
+           MOVE WS-GENERATED-ID TO WS-SCHEDULE-ID
 
            PERFORM GENERATE-TIME-STAMP
 
