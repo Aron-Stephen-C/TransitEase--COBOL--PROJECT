@@ -17,7 +17,7 @@ def send_otp_for_email_validation(user_email_address):
         subject = "Email Verification"
         body = f"Here is your one time password: \n{otp}"
         to_email = user_email_address
-
+    
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = to_email
