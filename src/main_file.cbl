@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. FRONT.
+       PROGRAM-ID. main_file.
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -39,246 +39,19 @@
        01  WS-UPDATE-FARE PIC 99V99.
        01  WS-GENERATE-CHOICE PIC X(3).
        
+       01  WS-BUFFER PIC X.
+       01  WS-RETURN-CODE    PIC 99.
+       
        PROCEDURE DIVISION.
       
-           PERFORM MAIN-PAGE.
+      *    PERFORM MAIN-PAGE.
 
            STOP RUN.
 
-       MAIN-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*            Welcome to TransitEase!              *"
-           DISPLAY "*                 By: Tech4Ward                   *"
-           DISPLAY "***************************************************"
-           DISPLAY "*                                                 *"
-           DISPLAY "*                 [1] User                        *"
-           DISPLAY "*                 [2] Admin                       *"
-           DISPLAY "*                                                 *"
-           DISPLAY "***************************************************"
-           DISPLAY " Enter your choice: " WITH NO ADVANCING
-           ACCEPT WS-MAINPAGE-CHOICE
 
-           EVALUATE WS-MAINPAGE-CHOICE
-               
-               WHEN 1 PERFORM USER-MAIN-PAGE
-               WHEN 2 PERFORM ADMIN-MAIN-PAGE
-               WHEN OTHER 
-                   PERFORM INVALID-INPUT-MESSAGE
-                   PERFORM MAIN-PAGE
-           
-           ACCEPT OMITTED.
-
-       USER-MAIN-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*               Welcome, Passenger!               *"
-           DISPLAY "***************************************************"
-           DISPLAY "*                                                 *"
-           DISPLAY "*                [1] Login                        *"
-           DISPLAY "*                [2] Sign Up                      *"
-           DISPLAY "*                                                 *"
-           DISPLAY "***************************************************"
-           DISPLAY " Enter your choice: " WITH NO ADVANCING
-           ACCEPT WS-USER-MAIN-PAGE-CHOICE
-
-           EVALUATE WS-USER-MAIN-PAGE-CHOICE
-               
-               WHEN 1 PERFORM USER-LOGIN-PAGE
-               WHEN 2 PERFORM USER-SIGNUP-PAGE
-               WHEN OTHER 
-                   PERFORM INVALID-INPUT-MESSAGE
-                   PERFORM USER-MAIN-PAGE
-           
-           ACCEPT OMITTED.
-
-       ADMIN-MAIN-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*                Welcome, Admin!                  *"
-           DISPLAY "***************************************************"
-           DISPLAY "*                                                 *"
-           DISPLAY "*                [1] Login                        *"
-           DISPLAY "*                [2] Sign Up                      *"
-           DISPLAY "*                                                 *"
-           DISPLAY "***************************************************"
-           DISPLAY " Enter your choice: " WITH NO ADVANCING
-           ACCEPT WS-ADMIN-MAIN-PAGE-CHOICE
-
-           EVALUATE WS-ADMIN-MAIN-PAGE-CHOICE
-               
-               WHEN 1 PERFORM ADMIN-LOGIN-PAGE
-               WHEN 2 PERFORM ADMIN-SIGNUP-PAGE
-               WHEN OTHER 
-                   PERFORM INVALID-INPUT-MESSAGE
-                   PERFORM ADMIN-MAIN-PAGE
-           
-           ACCEPT OMITTED.
-
-       USER-LOGIN-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*            Welcome to TransitEase!              *"
-           DISPLAY "*               Login Page - User                 *"
-           DISPLAY "***************************************************"
-         
-           DISPLAY " Enter your email: " WITH NO ADVANCING
-           ACCEPT WS-EMAIL
-           DISPLAY " Enter your password: " WITH NO ADVANCING
-           ACCEPT WS-PASSWORD
-           
-      *    INSERT BACKEND LOGIC HERE FOR INFO CHECKING IN DATA BASE    
-      *        PERFORM INVALID-ACCOUNT-MESSAGE
-           
-           PERFORM SUCCESS-LOGIN-MESSAGE
-           PERFORM USER-PAGE
-           
-           ACCEPT OMITTED.
-
-       USER-SIGNUP-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*            Welcome to TransitEase!              *"
-           DISPLAY "*              Sign Up Page - User                *"
-           DISPLAY "***************************************************"
-           
-           DISPLAY " Enter first name: " WITH NO ADVANCING
-           ACCEPT WS-FIRST-NAME
-           DISPLAY " Enter last name: " WITH NO ADVANCING
-           ACCEPT WS-LAST-NAME
-           DISPLAY " Enter your email: " WITH NO ADVANCING
-           ACCEPT WS-EMAIL
-           
-
-           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
-
-           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
-           DELIMITED BY SIZE INTO WS-COMMAND
-
-           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
-
-           IF WS-RETURN-CODE = 0 
-               OPEN INPUT FS-OTP-FILE
-                   READ FS-OTP-FILE INTO FS-OTP
-                   END-READ
-               CLOSE FS-OTP-FILE
-               PERFORM SUCCESS-OTP-MESSAGE
-               DISPLAY " Enter OTP: " WITH NO ADVANCING
-               ACCEPT WS-OTP
-
-               IF WS-OTP = FS-OTP
-                   PERFORM CORRECT-OTP-MESSAGE
-               ELSE
-                   PERFORM INCORRECT-OTP-MESSAGE
-           END-IF
-               
-           ELSE
-               PERFORM FAILED-OTP-MESSAGE
-
-           END-IF
-
-      *    INSERT BACKEND LOGIC HERE FOR EMAIL CHECKING IN DATA BASE
-      *        PERFORM EMAIL-TAKEN-MESSAGE
-
-           DISPLAY " Enter your password: " WITH NO ADVANCING
-           ACCEPT WS-PASSWORD
-           DISPLAY " Confirm your password: " WITH NO ADVANCING
-           ACCEPT WS-CONFIRM-PASSWORD
-
-           IF WS-PASSWORD = WS-CONFIRM-PASSWORD
-               PERFORM SUCCESS-ACCOUNT-MESSAGE
-               PERFORM MAIN-PAGE
-           ELSE
-               PERFORM PASSWORD-MISMATCH-MESSAGE
-               PERFORM USER-SIGNUP-PAGE
        
-           ACCEPT OMITTED.
 
-       ADMIN-LOGIN-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*            Welcome to TransitEase!              *"
-           DISPLAY "*              Login Page - Admin                 *"
-           DISPLAY "***************************************************"
-         
-           DISPLAY " Enter your email: " WITH NO ADVANCING
-           ACCEPT WS-EMAIL
-           DISPLAY " Enter your password: " WITH NO ADVANCING
-           ACCEPT WS-PASSWORD
-           
-      *    INSERT BACKEND LOGIC HERE FOR INFO CHECKING IN DATA BASE    
-      *        PERFORM INVALID-ACCOUNT-MESSAGE
-           
-           PERFORM SUCCESS-LOGIN-MESSAGE
-           PERFORM USER-PAGE
-           
-           ACCEPT OMITTED.
-
-       ADMIN-SIGNUP-PAGE.
-           CALL "SYSTEM" USING "clear"
-           DISPLAY "***************************************************"
-           DISPLAY "*            Welcome to TransitEase!              *"
-           DISPLAY "*             Sign Up Page - Admin                *"
-           DISPLAY "***************************************************"
-           
-           DISPLAY " Enter first name: " WITH NO ADVANCING
-           ACCEPT WS-FIRST-NAME
-           DISPLAY " Enter last name: " WITH NO ADVANCING
-           ACCEPT WS-LAST-NAME
-           DISPLAY " Enter your email: " WITH NO ADVANCING
-           ACCEPT WS-EMAIL
-
-           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
-
-           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
-           DELIMITED BY SIZE INTO WS-COMMAND
-
-           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
-
-           IF WS-RETURN-CODE = 0 
-               OPEN INPUT FS-OTP-FILE
-                   READ FS-OTP-FILE INTO FS-OTP
-                   END-READ
-               CLOSE FS-OTP-FILE
-               PERFORM SUCCESS-OTP-MESSAGE
-               DISPLAY " Enter OTP: " WITH NO ADVANCING
-               ACCEPT WS-OTP
-
-               IF WS-OTP = FS-OTP
-                   PERFORM CORRECT-OTP-MESSAGE
-               ELSE
-                   PERFORM INCORRECT-OTP-MESSAGE
-           END-IF
-               
-           ELSE
-               PERFORM FAILED-OTP-MESSAGE
-
-           END-IF
-
-      *    INSERT BACKEND LOGIC HERE FOR EMAIL CHECKING IN DATA BASE
-      *        PERFORM EMAIL-TAKEN-MESSAGE
-
-           DISPLAY " Enter your password: " WITH NO ADVANCING
-           ACCEPT WS-PASSWORD
-           DISPLAY " Confirm your password: " WITH NO ADVANCING
-           ACCEPT WS-CONFIRM-PASSWORD
-
-           IF WS-PASSWORD = WS-CONFIRM-PASSWORD
-               PERFORM SUCCESS-ACCOUNT-MESSAGE
-               PERFORM MAIN-PAGE
-           ELSE
-               PERFORM PASSWORD-MISMATCH-MESSAGE
-               PERFORM USER-SIGNUP-PAGE
-       
-           ACCEPT OMITTED.
-
-       INVALID-INPUT-MESSAGE.
-           DISPLAY "***************************************************"
-           DISPLAY "*            Invalid Input. Try Again!            *"
-           DISPLAY "***************************************************"
-           DISPLAY " Press 'enter' key to continue..."
-
-           ACCEPT OMITTED.
+      
 
       *INVALID-ACCOUNT-MESSAGE.
       *    DISPLAY "***************************************************"
@@ -290,19 +63,21 @@
 
        SUCCESS-OTP-MESSAGE.
            DISPLAY "***************************************************"
-           DISPLAY "*             OTP sent to your email!             *"
+           DISPLAY "*      An OTP has already been sent to your       *"
+           DISPLAY "*              company email address.             *"
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
 
        CORRECT-OTP-MESSAGE.
            DISPLAY "***************************************************"
-           DISPLAY "* Correct OTP. You may now complete your sign up! *"
+           DISPLAY "*    OTP verification successfull. You may now    *"
+           DISPLAY "*              complete your sign up!             *"
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
 
        INCORRECT-OTP-MESSAGE.
            DISPLAY "***************************************************"
@@ -310,15 +85,14 @@
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
        FAILED-OTP-MESSAGE.
            DISPLAY "***************************************************"
            DISPLAY "*           ERROR: OTP failed to send!            *"
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
        
        SUCCESS-LOGIN-MESSAGE.
            DISPLAY "***************************************************"
@@ -326,15 +100,14 @@
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
       *EMAIL-TAKEN-MESSAGE.
       *    DISPLAY "***************************************************"
       *    DISPLAY "*        Email is already taken. Try Again!       *"
       *    DISPLAY "***************************************************"
       *    DISPLAY " Press 'enter' key to continue..."
 
-      *    ACCEPT OMITTED.
+      *    ACCEPT WS-BUFFER.
 
        PASSWORD-MISMATCH-MESSAGE.
            DISPLAY "***************************************************"
@@ -342,15 +115,15 @@
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
+           
        SUCCESS-ACCOUNT-MESSAGE.
            DISPLAY "***************************************************"
            DISPLAY "*          Account Created Successfully!          *"
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
 
        USER-PAGE.
            CALL "SYSTEM" USING "clear"
@@ -373,8 +146,7 @@
                WHEN 3 PERFORM MAIN-PAGE
                WHEN OTHER PERFORM INVALID-INPUT-MESSAGE
 
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
        ADMIN-PAGE.
            CALL "SYSTEM" USING "clear"
            DISPLAY "***************************************************"
@@ -396,7 +168,7 @@
                WHEN 3 PERFORM MAIN-PAGE
                WHEN OTHER PERFORM INVALID-INPUT-MESSAGE
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
 
        BOOK-TICKET-PAGE.
            CALL "SYSTEM" USING "clear"
@@ -461,8 +233,7 @@
 
                        PERFORM AVAILABLE-SEATS-PAGE
 
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
       *NOAVAILABLE-SEATS-MESSAGE.
       *    DISPLAY "***************************************************"
       *    DISPLAY "*         No available seat/s. Try Again!         *"
@@ -508,7 +279,8 @@
            DISPLAY "**************                       **************"
            DISPLAY "**********************       **********************"         
            DISPLAY "*  37 *   38 *   39  *       *   40  *  41  *  42 *"    
-           DISPLAY "**********************       **********************"               
+           DISPLAY "**********************       **********************" 
+           DISPLAY " "             
            DISPLAY "***************************************************"
            DISPLAY "*         Passenger Type (For Discounts)          *"
            DISPLAY "***************************************************"
@@ -542,7 +314,7 @@
                    PERFORM SUCCESS-SEAT-MESSAGE
                    PERFORM AVAIL-SEAT-QUESTION
 
-           ACCEPT OMITTED.
+           ACCEPT WS-BUFFER.
 
        AVAIL-SEAT-QUESTION.
            CALL "SYSTEM" USING "clear"
@@ -559,8 +331,7 @@
                    PERFORM INVALID-INPUT-MESSAGE
                    PERFORM AVAIL-SEAT-QUESTION
            
-           ACCEPT OMITTED.
-
+           ACCEPT WS-BUFFER.
       *SEAT-TAKEN-MESSAGE.
       *    DISPLAY "***************************************************"
       *    DISPLAY "*     Seat number is already taken. Try Again!    *"

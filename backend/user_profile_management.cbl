@@ -21,6 +21,9 @@
            SELECT FS-HASHED-PASSWORD-FILE ASSIGN TO 
            'data/hashpassword.txt'
            ORGANIZATION IS LINE SEQUENTIAL.
+
+           SELECT FS-OTP-FILE ASSIGN TO 'data/otp.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
        
        DATA DIVISION.
        FILE SECTION.
@@ -63,6 +66,9 @@
                    04    FS-A-MINUTES    PIC 99.
                    04    FS-A-COLON-2    PIC X.
                    04    FS-A-SECOND    PIC 99.
+
+       FD  FS-OTP-FILE.
+       01  FS-OTP    PIC X(6).
        
        WORKING-STORAGE SECTION.
        01  WS-DATE    PIC 9(6).
@@ -100,43 +106,429 @@
                    04    WS-TS-MINUTES    PIC 99.
                    04    WS-TS-COLON-2    PIC X VALUE ':'.
                    04    WS-TS-SECOND    PIC 99.
+
+       01  WS-MAIN-CHOICE PIC X.
+       01  WS-USER-MAIN-PAGE-CHOICE PIC X.
+       01  WS-ADMIN-MAIN-PAGE-CHOICE PIC X.
+       01  WS-USER-CHOICE PIC X.
+       01  WS-ADMIN-CHOICE PIC X.
+       01  WS-BUFFER    PIC X.
+       01  WS-BOOL    PIC 9.
+       01  WS-OTP    PIC X(6).
+       01  WS-RETURN-MAINPAGE PIC X(3).
+
+       01  WS-CONFIRM-PASSWORD    PIC X(64).
        
-       LINKAGE SECTION.
-       01  LS-USER-RECORD.
-           02  LS-FIRST-NAME    PIC X(50).
-           02  LS-LAST-NAME    PIC X(50).
-           02  LS-EMAIL    PIC X(100).
-           02  LS-PASSWORD    PIC X(100).
-           02  LS-PHONE-NUMBER    PIC X(11).
-           02  LS-ROLE    PIC X.
-       
-       PROCEDURE DIVISION USING LS-USER-RECORD.
+       PROCEDURE DIVISION.
            PERFORM CHECK-FILE-STATUS
+           
+           PERFORM MAIN-PAGE
 
-           PERFORM INITIALIZE-RECORDS
-
-           EVALUATE WS-ROLE
-               WHEN 'P'
-                   PERFORM RECORD-PASSENGER
-               WHEN 'A'
-                   PERFORM RECORD-ADMIN 
-               WHEN OTHER
-                   DISPLAY 'Error : <Invalid Role>'
-                  CONTINUE
-           END-EVALUATE
            GOBACK
            STOP RUN.
 
-       INITIALIZE-RECORDS.
-           MOVE LS-FIRST-NAME TO WS-FIRST-NAME
-           MOVE LS-LAST-NAME TO WS-LAST-NAME
-           MOVE LS-EMAIL TO WS-EMAIL
-           PERFORM HASH-PASSWORD
-           MOVE WS-HASHED-PASSWORD TO WS-PASSWORD
-           MOVE WS-HASHED-PASSWORD TO LS-PASSWORD
-           MOVE LS-PHONE-NUMBER TO WS-PHONE-NUMBER
-           MOVE LS-ROLE TO WS-ROLE
+       MAIN-PAGE.
+           MOVE SPACES TO WS-MAIN-CHOICE
+           PERFORM UNTIL WS-MAIN-CHOICE = '3'
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*            Welcome to TransitEase!              *"
+           DISPLAY "*                 By: Tech4Ward                   *"
+           DISPLAY "***************************************************"
+           DISPLAY "*                                                 *"
+           DISPLAY "*                 [1] Passenger                   *"
+           DISPLAY "*                 [2] Admin                       *"
+           DISPLAY "*                 [3] Quit                        *"
+           DISPLAY "*                                                 *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter your choice: " WITH NO ADVANCING
+           ACCEPT WS-MAIN-CHOICE
+
+           EVALUATE WS-MAIN-CHOICE              
+               WHEN '1' 
+                   PERFORM PASSENGER-MAIN-PAGE
+               WHEN '2' 
+                   PERFORM ADMIN-MAIN-PAGE
+               WHEN '3' 
+                   CONTINUE
+               WHEN OTHER 
+                   PERFORM INVALID-INPUT-MESSAGE
+           END-EVALUATE
+           END-PERFORM
            .
+
+       PASSENGER-MAIN-PAGE.
+           MOVE SPACES TO WS-USER-CHOICE 
+           PERFORM UNTIL WS-USER-CHOICE = '3'
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*               Welcome, Passenger!               *"
+           DISPLAY "***************************************************"
+           DISPLAY "*                                                 *"
+           DISPLAY "*                [1] Login                        *"
+           DISPLAY "*                [2] Sign Up                      *"
+           DISPLAY "*                [3] Go Back                      *"
+           DISPLAY "*                                                 *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter your choice: " WITH NO ADVANCING
+           ACCEPT WS-USER-MAIN-PAGE-CHOICE
+
+           EVALUATE WS-USER-MAIN-PAGE-CHOICE
+               
+               WHEN '1' 
+                   PERFORM PASSENGER-LOGIN-PAGE
+               WHEN '2' 
+                   PERFORM PASSENGER-SIGNUP-PAGE
+               WHEN '3' 
+                   CONTINUE
+               WHEN OTHER 
+                   PERFORM INVALID-INPUT-MESSAGE
+           END-EVALUATE
+           END-PERFORM
+           ACCEPT WS-BUFFER
+           .
+
+       PASSENGER-LOGIN-PAGE.
+           PERFORM CLEAR
+           MOVE SPACES TO WS-EOF
+           MOVE ZEROES TO WS-BOOL
+           DISPLAY "***************************************************"
+           DISPLAY "*            Welcome to TransitEase!              *"
+           DISPLAY "*            Login Page - Passenger               *"
+           DISPLAY "***************************************************"
+         
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
+           DISPLAY " Enter your password: " WITH NO ADVANCING
+           ACCEPT WS-PASSWORD
+           
+
+           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+           PERFORM HASH-PASSWORD
+
+           OPEN INPUT FS-PASSENGER-FILE
+               READ FS-PASSENGER-FILE NEXT RECORD
+                   AT END CONTINUE
+                   NOT AT END 
+                       PERFORM UNTIL WS-EOF = 'Y'
+                           IF FS-P-EMAIL = WS-EMAIL AND FS-P-PASSWORD 
+                               = WS-HASHED-PASSWORD THEN    
+                               MOVE 1 TO WS-BOOL
+                           END-IF
+                           READ FS-PASSENGER-FILE NEXT RECORD
+                           AT END MOVE 'Y' TO WS-EOF
+                           END-READ
+                       END-PERFORM
+               END-READ
+               
+           CLOSE FS-PASSENGER-FILE
+
+           IF WS-BOOL = 1 THEN
+               PERFORM SUCCESS-LOGIN-MESSAGE
+           ELSE 
+               PERFORM INVALID-ACCOUNT-MESSAGE
+           END-IF
+           
+           ACCEPT WS-BUFFER.
+
+       PASSENGER-SIGNUP-PAGE.
+           PERFORM CLEAR
+           MOVE 1 TO WS-BOOL
+           MOVE 'p' TO WS-ROLE
+           MOVE SPACES TO WS-EOF    
+           DISPLAY "***************************************************"
+           DISPLAY "*            Welcome to TransitEase!              *"
+           DISPLAY "*            Sign Up Page - Passenger             *"
+           DISPLAY "***************************************************"
+           
+           DISPLAY " Enter first name: " WITH NO ADVANCING
+           ACCEPT WS-FIRST-NAME
+           DISPLAY " Enter last name: " WITH NO ADVANCING
+           ACCEPT WS-LAST-NAME
+           DISPLAY "Enter your phone number: " WITH NO ADVANCING
+           ACCEPT WS-PHONE-NUMBER
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
+
+
+           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+           
+           OPEN INPUT FS-PASSENGER-FILE
+               READ FS-PASSENGER-FILE NEXT RECORD
+                   AT END CONTINUE
+                   NOT AT END
+                   PERFORM UNTIL WS-EOF = 'Y'
+                       IF WS-EMAIL = FS-P-EMAIL
+                           MOVE 0 TO WS-BOOL
+                       END-IF
+                       READ FS-PASSENGER-FILE NEXT RECORD 
+                       AT END MOVE 'Y' TO WS-EOF
+                       END-READ
+                   END-PERFORM
+               END-READ
+           CLOSE FS-PASSENGER-FILE
+
+           IF WS-BOOL = 0 THEN
+               PERFORM EMAIL-TAKEN-MESSAGE
+               PERFORM PASSENGER-SIGNUP-PAGE
+           END-IF
+
+           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
+           DELIMITED BY SIZE INTO WS-COMMAND
+
+           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
+
+           IF WS-RETURN-CODE = 0 
+               PERFORM USER-SUCCESS-OTP-MESSAGE
+               OPEN INPUT FS-OTP-FILE
+                   READ FS-OTP-FILE INTO FS-OTP
+                   END-READ
+               CLOSE FS-OTP-FILE
+               DISPLAY " Enter OTP: " WITH NO ADVANCING
+               ACCEPT WS-OTP
+
+               IF WS-OTP = FS-OTP
+               PERFORM CORRECT-OTP-MESSAGE
+               DISPLAY " Enter your password: " WITH NO ADVANCING
+               ACCEPT WS-PASSWORD
+               DISPLAY " Confirm your password: " WITH NO ADVANCING
+               ACCEPT WS-CONFIRM-PASSWORD
+      
+               IF LENGTH OF WS-PASSWORD = 8 AND WS-CONFIRM-PASSWORD = 8 
+               THEN
+                   IF WS-PASSWORD = WS-CONFIRM-PASSWORD
+                       PERFORM SUCCESS-ACCOUNT-MESSAGE
+                       PERFORM RECORD-PASSENGER
+                       PERFORM MAIN-PAGE
+                   ELSE
+                       PERFORM PASSWORD-MISMATCH-MESSAGE
+
+                        PERFORM UNTIL WS-RETURN-MAINPAGE = 'NO'
+                            PERFORM RETURN-TO-MAINPAGE
+
+                            EVALUATE WS-RETURN-MAINPAGE
+                                WHEN 'YES'
+                                PERFORM PASSENGER-MAIN-PAGE
+                            WHEN 'NO'
+                                    PERFORM PASSENGER-SIGNUP-PAGE
+                            WHEN OTHER
+                                    DISPLAY ' '
+                                    DISPLAY 'Invalid Input'
+                            END-EVALUATE
+                        END-PERFORM
+
+                   END-IF
+               ELSE
+                   PERFORM PASSWORD-EXCEED-MESSAGE
+               END-IF
+               ELSE
+                   PERFORM INCORRECT-OTP-MESSAGE
+           END-IF
+               
+           ELSE
+               PERFORM FAILED-OTP-MESSAGE
+
+           END-IF
+
+           
+
+       
+           ACCEPT WS-BUFFER.
+
+       ADMIN-MAIN-PAGE.
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*                Welcome, Admin!                  *"
+           DISPLAY "***************************************************"
+           DISPLAY "*                                                 *"
+           DISPLAY "*                [1] Login                        *"
+           DISPLAY "*                [2] Sign Up                      *"
+           DISPLAY "*                [3] Go Back                      *"
+           DISPLAY "*                                                 *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter your choice: " WITH NO ADVANCING
+           ACCEPT WS-ADMIN-MAIN-PAGE-CHOICE
+
+           EVALUATE WS-ADMIN-MAIN-PAGE-CHOICE
+               
+               WHEN '1' PERFORM ADMIN-LOGIN-PAGE
+               WHEN '2' PERFORM ADMIN-SIGNUP-PAGE
+               WHEN '3' PERFORM RETURN-TO-MAINPAGE
+               WHEN OTHER 
+                   PERFORM INVALID-INPUT-MESSAGE
+                   PERFORM ADMIN-MAIN-PAGE
+           
+           ACCEPT WS-BUFFER.
+       
+
+       ADMIN-LOGIN-PAGE.
+           PERFORM CLEAR
+           MOVE ZEROES TO WS-BOOL
+           DISPLAY "***************************************************"
+           DISPLAY "*            Welcome to TransitEase!              *"
+           DISPLAY "*              Login Page - Admin                 *"
+           DISPLAY "***************************************************"
+         
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
+           DISPLAY " Enter your password: " WITH NO ADVANCING
+           ACCEPT WS-PASSWORD
+           
+           
+           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+           PERFORM HASH-PASSWORD
+
+           OPEN INPUT FS-ADMIN-FILE
+               READ FS-ADMIN-FILE NEXT RECORD
+                   AT END CONTINUE
+                   NOT AT END 
+                       PERFORM UNTIL WS-EOF = 'Y'
+                           IF FS-A-EMAIL = WS-EMAIL AND FS-A-PASSWORD 
+                               = WS-HASHED-PASSWORD THEN    
+                               MOVE 1 TO WS-BOOL
+                           END-IF
+                           READ FS-ADMIN-FILE NEXT RECORD
+                           AT END MOVE 'Y' TO WS-EOF
+                           END-READ
+                       END-PERFORM
+               END-READ
+               
+           CLOSE FS-PASSENGER-FILE
+
+           IF WS-BOOL = 1 THEN
+               PERFORM SUCCESS-LOGIN-MESSAGE
+               PERFORM MAIN-PAGE
+           ELSE 
+               PERFORM INVALID-ACCOUNT-MESSAGE
+           END-IF
+           
+           
+           
+           ACCEPT WS-BUFFER.
+
+       ADMIN-SIGNUP-PAGE.
+           MOVE SPACES TO WS-EOF
+           MOVE ZEROES TO WS-BOOL
+           MOVE 'a' TO WS-ROLE
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*            Welcome to TransitEase!              *"
+           DISPLAY "*             Sign Up Page - Admin                *"
+           DISPLAY "***************************************************"
+           
+           MOVE 'TransitEase2025@gmail.com' TO WS-EMAIL
+           
+           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
+           DELIMITED BY SIZE INTO WS-COMMAND
+       
+           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
+       
+           IF WS-RETURN-CODE = 0 
+               OPEN INPUT FS-OTP-FILE
+                   READ FS-OTP-FILE INTO FS-OTP
+                   END-READ
+               CLOSE FS-OTP-FILE
+               PERFORM USER-SUCCESS-OTP-MESSAGE
+               DISPLAY " Enter OTP: " WITH NO ADVANCING
+               ACCEPT WS-OTP
+       
+               IF WS-OTP = FS-OTP
+                   PERFORM CORRECT-OTP-MESSAGE
+                   MOVE 1 TO WS-BOOL
+               ELSE
+                   PERFORM INCORRECT-OTP-MESSAGE
+           END-IF    
+           MOVE 1 TO WS-BOOL
+           
+           IF WS-BOOL = 1 THEN
+               DISPLAY " Enter first name: " WITH NO ADVANCING
+               ACCEPT WS-FIRST-NAME
+               DISPLAY " Enter last name: " WITH NO ADVANCING
+               ACCEPT WS-LAST-NAME
+               DISPLAY " Enter your phone number: " WITH NO ADVANCING
+               ACCEPT WS-PHONE-NUMBER
+               DISPLAY " Enter your email: " WITH NO ADVANCING
+               ACCEPT WS-EMAIL
+      
+               MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+               OPEN INPUT FS-ADMIN-FILE
+                   READ FS-ADMIN-FILE NEXT RECORD
+                       AT END CONTINUE
+                       NOT AT END
+                           PERFORM UNTIL WS-EOF = 'Y'
+                           DISPLAY FS-ADMIN-RECORD
+                               IF FS-A-EMAIL = WS-EMAIL THEN
+                                   MOVE 0 TO WS-BOOL
+                               END-IF
+                               READ FS-ADMIN-FILE NEXT RECORD
+                               AT END MOVE 'Y' TO WS-EOF
+                               END-READ
+                           END-PERFORM
+                   END-READ
+               CLOSE FS-ADMIN-FILE
+
+            IF WS-BOOL = 0 THEN
+               PERFORM EMAIL-TAKEN-MESSAGE
+               PERFORM ADMIN-MAIN-PAGE
+           END-IF
+
+           STRING "python3 backend/python_script_for_email.py "WS-EMAIL
+           DELIMITED BY SIZE INTO WS-COMMAND
+
+           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
+
+           IF WS-RETURN-CODE = 0 
+               OPEN INPUT FS-OTP-FILE
+                   READ FS-OTP-FILE INTO FS-OTP
+                   END-READ
+               CLOSE FS-OTP-FILE
+               PERFORM USER-SUCCESS-OTP-MESSAGE
+               DISPLAY " Enter OTP: " WITH NO ADVANCING
+               ACCEPT WS-OTP
+
+               IF WS-OTP = FS-OTP
+                   PERFORM CORRECT-OTP-MESSAGE
+
+                   DISPLAY " Enter your password: " WITH NO ADVANCING
+                   ACCEPT WS-PASSWORD
+                   DISPLAY " Confirm your password: " WITH NO ADVANCING
+                   ACCEPT WS-CONFIRM-PASSWORD
+
+                   IF LENGTH OF WS-PASSWORD = 8 AND LENGTH OF 
+                   WS-CONFIRM-PASSWORD = 8 THEN
+                       IF WS-PASSWORD = WS-CONFIRM-PASSWORD THEN
+                           PERFORM RECORD-ADMIN
+                           PERFORM SUCCESS-ACCOUNT-MESSAGE
+                           PERFORM ADMIN-MAIN-PAGE
+                       ELSE
+                           PERFORM INVALID-ACCOUNT-MESSAGE
+                           PERFORM ADMIN-MAIN-PAGE
+                       END-IF
+                   ELSE
+                       PERFORM INVALID-ACCOUNT-MESSAGE
+                       PERFORM ADMIN-MAIN-PAGE
+                   END-IF
+      
+                   
+               ELSE
+                   PERFORM INCORRECT-OTP-MESSAGE
+           END-IF   
+       
+           ACCEPT WS-BUFFER.
+
+      *INITIALIZE-RECORDS.
+      *    MOVE LS-FIRST-NAME TO WS-FIRST-NAME
+      *    MOVE LS-LAST-NAME TO WS-LAST-NAME
+      *    MOVE LS-EMAIL TO WS-EMAIL
+      *    PERFORM HASH-PASSWORD
+      *    MOVE WS-HASHED-PASSWORD TO WS-PASSWORD
+      *    MOVE WS-HASHED-PASSWORD TO LS-PASSWORD
+      *    MOVE LS-PHONE-NUMBER TO WS-PHONE-NUMBER
+      *    MOVE LS-ROLE TO WS-ROLE
+      *    .
        
        RECORD-ADMIN.
       *    Fetch Last Generated ID (Para sa incremententation)
@@ -160,6 +552,8 @@
            END-READ
            
            PERFORM HASH-PASSWORD
+           
+           MOVE FS-HASHED-PASSWORD TO WS-PASSWORD
 
            IF WS-LAST-GENERATED-ID NOT EQUAL TO SPACES THEN
                MOVE WS-L-INCREMENT-VALUE TO WS-INCREMENT-VALUE
@@ -205,6 +599,8 @@
            END-READ
 
            PERFORM HASH-PASSWORD
+
+           MOVE WS-HASHED-PASSWORD TO WS-PASSWORD
        
            IF WS-LAST-GENERATED-ID NOT EQUAL TO SPACES THEN
                MOVE WS-L-INCREMENT-VALUE TO WS-INCREMENT-VALUE
@@ -271,7 +667,7 @@
        HASH-PASSWORD.
       *    Hashes password for security using python
            STRING "python3 backend/hash_password.py " 
-               LS-PASSWORD DELIMITED BY SIZE INTO WS-COMMAND.
+               WS-PASSWORD DELIMITED BY SIZE INTO WS-COMMAND.
            CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE.
 
            IF WS-RETURN-CODE = 0
@@ -281,8 +677,128 @@
                CLOSE FS-HASHED-PASSWORD-FILE
                MOVE FS-HASHED-PASSWORD TO WS-HASHED-PASSWORD
            ELSE
-               DISPLAY "Failed to hash the password."
+               PERFORM INVALID-HASH-PASSWORD
            END-IF
            OPEN OUTPUT FS-HASHED-PASSWORD-FILE
            CLOSE FS-HASHED-PASSWORD-FILE
            .
+
+       INVALID-HASH-PASSWORD.
+           DISPLAY "***************************************************"
+           DISPLAY "*           Failed to hash the password.          *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       INVALID-INPUT-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*            Invalid Input. Try Again!            *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       SUCCESS-LOGIN-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*               Login Successful!                 *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       SUCCESS-ACCOUNT-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*          Account Created Successfully!          *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       INVALID-ACCOUNT-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*     Invalid email and/or Password. Try Again!   *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+       
+           ACCEPT WS-BUFFER.
+
+       USER-SUCCESS-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*      An OTP has already been sent to your       *"
+           DISPLAY "*              email address.                     *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       ADMIN-SUCCESS-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*      An OTP has already been sent to your       *"
+           DISPLAY "*              company email address.             *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       CORRECT-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*    OTP verification successfull. You may now    *"
+           DISPLAY "*              complete your sign up!             *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       INCORRECT-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           Incorrect OTP. Try Again!             *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       FAILED-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           ERROR: OTP failed to send!            *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       EMAIL-TAKEN-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*        Email is already taken. Try Again!       *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       PASSWORD-MISMATCH-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*        Password do not match. Try Again!        *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       PASSWORD-EXCEED-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*        Password exceeds the allowed length!     *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       RETURN-TO-MAINPAGE.
+           DISPLAY "Do you want to go back? [YES] [NO]: " 
+           WITH NO ADVANCING
+           ACCEPT WS-RETURN-MAINPAGE
+
+           MOVE FUNCTION UPPER-CASE(WS-RETURN-MAINPAGE) TO 
+           WS-RETURN-MAINPAGE
+           .       
+           
+       CLEAR.
+           CALL 'SYSTEM' USING 'clear'.
+
