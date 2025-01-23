@@ -2,13 +2,26 @@
        PROGRAM-ID. FRONT.
 
        ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT FS-OTP-FILE ASSIGN TO "data/otp.txt"
+           ORGANIZATION IS LINE sequential.
 
        DATA DIVISION.
+       FILE SECTION.
+       FD  FS-OTP-FILE.
+       01  FS-OTP PIC X(6).
+
        WORKING-STORAGE SECTION.
        01  WS-MAINPAGE-CHOICE PIC 99.
        01  WS-USER-MAIN-PAGE-CHOICE PIC 99.
        01  WS-ADMIN-MAIN-PAGE-CHOICE pic 99.
-       01  WS-USERNAME PIC X(30).
+       01  WS-COMMAND PIC X(300). 
+       01  WS-EMAIL PIC X(100).
+       01  WS-RETURN-CODE PIC 9(2).
+       01  WS-FIRST-NAME PIC X(30).
+       01  WS-LAST-NAME PIC X(30).
+       01  WS-OTP PIC 9(6).
        01  WS-PASSWORD PIC X(16).
        01  WS-CONFIRM-PASSWORD PIC X(16).
        01  WS-USERPAGE-CHOICE PIC 99.
@@ -20,7 +33,6 @@
        01  WS-SEAT-NUMBER PIC 99.
        01  WS-AVAIL-CHOICE PIC X(3).
        01  WS-NAME PIC X(30).
-       01  WS-EMAIL PIC X(30).
        01  WS-CANCEL-CHOICE PIC X(3).
        01  WS-UPDATE-KEY PIC 99.
        01  WS-UPDATE-SCHEDULE PIC X(15).
@@ -110,8 +122,8 @@
            DISPLAY "*               Login Page - User                 *"
            DISPLAY "***************************************************"
          
-           DISPLAY " Enter your username: " WITH NO ADVANCING
-           ACCEPT WS-USERNAME
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
            DISPLAY " Enter your password: " WITH NO ADVANCING
            ACCEPT WS-PASSWORD
            
@@ -130,11 +142,43 @@
            DISPLAY "*              Sign Up Page - User                *"
            DISPLAY "***************************************************"
            
-           DISPLAY " Enter your username: " WITH NO ADVANCING
-           ACCEPT WS-USERNAME
+           DISPLAY " Enter first name: " WITH NO ADVANCING
+           ACCEPT WS-FIRST-NAME
+           DISPLAY " Enter last name: " WITH NO ADVANCING
+           ACCEPT WS-LAST-NAME
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
+           
 
-      *    INSERT BACKEND LOGIC HERE FOR USERNAME CHECKING IN DATA BASE
-      *        PERFORM USERNAME-TAKEN-MESSAGE
+           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
+           DELIMITED BY SIZE INTO WS-COMMAND
+
+           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
+
+           IF WS-RETURN-CODE = 0 
+               OPEN INPUT FS-OTP-FILE
+                   READ FS-OTP-FILE INTO FS-OTP
+                   END-READ
+               CLOSE FS-OTP-FILE
+               PERFORM SUCCESS-OTP-MESSAGE
+               DISPLAY " Enter OTP: " WITH NO ADVANCING
+               ACCEPT WS-OTP
+
+               IF WS-OTP = FS-OTP
+                   PERFORM CORRECT-OTP-MESSAGE
+               ELSE
+                   PERFORM INCORRECT-OTP-MESSAGE
+           END-IF
+               
+           ELSE
+               PERFORM FAILED-OTP-MESSAGE
+
+           END-IF
+
+      *    INSERT BACKEND LOGIC HERE FOR EMAIL CHECKING IN DATA BASE
+      *        PERFORM EMAIL-TAKEN-MESSAGE
 
            DISPLAY " Enter your password: " WITH NO ADVANCING
            ACCEPT WS-PASSWORD
@@ -157,8 +201,8 @@
            DISPLAY "*              Login Page - Admin                 *"
            DISPLAY "***************************************************"
          
-           DISPLAY " Enter your username: " WITH NO ADVANCING
-           ACCEPT WS-USERNAME
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
            DISPLAY " Enter your password: " WITH NO ADVANCING
            ACCEPT WS-PASSWORD
            
@@ -166,7 +210,7 @@
       *        PERFORM INVALID-ACCOUNT-MESSAGE
            
            PERFORM SUCCESS-LOGIN-MESSAGE
-           PERFORM ADMIN-PAGE
+           PERFORM USER-PAGE
            
            ACCEPT OMITTED.
 
@@ -177,11 +221,42 @@
            DISPLAY "*             Sign Up Page - Admin                *"
            DISPLAY "***************************************************"
            
-           DISPLAY " Enter your username: " WITH NO ADVANCING
-           ACCEPT WS-USERNAME
+           DISPLAY " Enter first name: " WITH NO ADVANCING
+           ACCEPT WS-FIRST-NAME
+           DISPLAY " Enter last name: " WITH NO ADVANCING
+           ACCEPT WS-LAST-NAME
+           DISPLAY " Enter your email: " WITH NO ADVANCING
+           ACCEPT WS-EMAIL
 
-      *    INSERT BACKEND LOGIC HERE FOR USERNAME CHECKING IN DATA BASE
-      *        PERFORM USERNAME-TAKEN-MESSAGE
+           MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+           STRING "python3 backend/python_script_for_email.py " WS-EMAIL
+           DELIMITED BY SIZE INTO WS-COMMAND
+
+           CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
+
+           IF WS-RETURN-CODE = 0 
+               OPEN INPUT FS-OTP-FILE
+                   READ FS-OTP-FILE INTO FS-OTP
+                   END-READ
+               CLOSE FS-OTP-FILE
+               PERFORM SUCCESS-OTP-MESSAGE
+               DISPLAY " Enter OTP: " WITH NO ADVANCING
+               ACCEPT WS-OTP
+
+               IF WS-OTP = FS-OTP
+                   PERFORM CORRECT-OTP-MESSAGE
+               ELSE
+                   PERFORM INCORRECT-OTP-MESSAGE
+           END-IF
+               
+           ELSE
+               PERFORM FAILED-OTP-MESSAGE
+
+           END-IF
+
+      *    INSERT BACKEND LOGIC HERE FOR EMAIL CHECKING IN DATA BASE
+      *        PERFORM EMAIL-TAKEN-MESSAGE
 
            DISPLAY " Enter your password: " WITH NO ADVANCING
            ACCEPT WS-PASSWORD
@@ -193,7 +268,7 @@
                PERFORM MAIN-PAGE
            ELSE
                PERFORM PASSWORD-MISMATCH-MESSAGE
-               PERFORM ADMIN-SIGNUP-PAGE
+               PERFORM USER-SIGNUP-PAGE
        
            ACCEPT OMITTED.
 
@@ -212,6 +287,38 @@
       *    DISPLAY " Press 'enter' key to continue..."
 
       *    ACCEPT OMITTED.
+
+       SUCCESS-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*             OTP sent to your email!             *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT OMITTED.
+
+       CORRECT-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "* Correct OTP. You may now complete your sign up! *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT OMITTED.
+
+       INCORRECT-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           Incorrect OTP. Try Again!             *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT OMITTED.
+
+       FAILED-OTP-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           ERROR: OTP failed to send!            *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT OMITTED.
        
        SUCCESS-LOGIN-MESSAGE.
            DISPLAY "***************************************************"
@@ -221,9 +328,9 @@
 
            ACCEPT OMITTED.
 
-      *USERNAME-TAKEN-MESSAGE.
+      *EMAIL-TAKEN-MESSAGE.
       *    DISPLAY "***************************************************"
-      *    DISPLAY "*      Username is already taken. Try Again!      *"
+      *    DISPLAY "*        Email is already taken. Try Again!       *"
       *    DISPLAY "***************************************************"
       *    DISPLAY " Press 'enter' key to continue..."
 
