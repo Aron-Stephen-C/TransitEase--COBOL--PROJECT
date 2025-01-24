@@ -6,6 +6,14 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
+
+           SELECT FS-CURRENT-USER-FILE ASSIGN 
+           TO 'data/artifact/current_user.dat'
+           ORGANIZATION IS LINE SEQUENTIAL
+           ACCESS IS SEQUENTIAL
+           FILE STATUS IS WS-FILE-STATUS.
+
+
            SELECT FS-PASSENGER-FILE ASSIGN TO 'data/passenger_file.dat'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
@@ -27,6 +35,9 @@
        
        DATA DIVISION.
        FILE SECTION.
+       FD  FS-CURRENT-USER-FILE.
+       01  FS-CURRENT-USER    PIC X(15).
+
        FD  FS-HASHED-PASSWORD-FILE.
        01  FS-HASHED-PASSWORD    PIC X(64).
 
@@ -215,6 +226,7 @@
                            IF FS-P-EMAIL = WS-EMAIL AND FS-P-PASSWORD 
                                = WS-HASHED-PASSWORD THEN    
                                MOVE 1 TO WS-BOOL
+                               MOVE 'Y' TO WS-EOF
                            END-IF
                            READ FS-PASSENGER-FILE NEXT RECORD
                            AT END MOVE 'Y' TO WS-EOF
@@ -223,6 +235,13 @@
                END-READ
                
            CLOSE FS-PASSENGER-FILE
+
+           MOVE FS-P-USER-ID TO FS-CURRENT-USER
+
+           OPEN OUTPUT FS-CURRENT-USER-FILE
+               WRITE FS-CURRENT-USER
+               END-WRITE
+           CLOSE FS-CURRENT-USER-FILE
 
            IF WS-BOOL = 1 THEN
                PERFORM SUCCESS-LOGIN-MESSAGE
@@ -297,7 +316,7 @@
                DISPLAY " Confirm your password: " WITH NO ADVANCING
                ACCEPT WS-CONFIRM-PASSWORD
 
-               IF LENGTH OF WS-PASSWORD <= 8 AND WS-CONFIRM-PASSWORD <=8 
+               IF LENGTH OF WS-PASSWORD >= 8 OR WS-CONFIRM-PASSWORD >=8 
                THEN
                    IF WS-PASSWORD = WS-CONFIRM-PASSWORD
                        PERFORM SUCCESS-ACCOUNT-MESSAGE
@@ -643,6 +662,17 @@
                END-IF
            END-IF
            CLOSE FS-ADMIN-FILE
+
+           MOVE SPACES TO WS-FILE-STATUS
+
+           OPEN I-O FS-CURRENT-USER-FILE
+           IF WS-FILE-STATUS NOT = '00' THEN
+               OPEN OUTPUT FS-CURRENT-USER-FILE
+               IF WS-FILE-STATUS NOT = '00' THEN
+                   DISPLAY 'Error : <Unable Create a File>'
+               END-IF
+           END-IF
+           CLOSE FS-CURRENT-USER-FILE
            .
            
        
