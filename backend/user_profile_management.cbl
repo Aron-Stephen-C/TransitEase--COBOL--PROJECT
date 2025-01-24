@@ -6,6 +6,14 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
+
+           SELECT FS-CURRENT-USER-FILE ASSIGN 
+           TO 'data/artifact/current_user.dat'
+           ORGANIZATION IS LINE SEQUENTIAL
+           ACCESS IS SEQUENTIAL
+           FILE STATUS IS WS-FILE-STATUS.
+
+
            SELECT FS-PASSENGER-FILE ASSIGN TO 'data/passenger_file.dat'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
@@ -27,6 +35,9 @@
        
        DATA DIVISION.
        FILE SECTION.
+       FD  FS-CURRENT-USER-FILE.
+       01  FS-CURRENT-USER    PIC X(15).
+
        FD  FS-HASHED-PASSWORD-FILE.
        01  FS-HASHED-PASSWORD    PIC X(64).
 
@@ -116,8 +127,8 @@
        01  WS-BOOL    PIC 9.
        01  WS-OTP    PIC X(6).
        01  WS-RETURN-MAINPAGE PIC X(3).
-
        01  WS-CONFIRM-PASSWORD    PIC X(64).
+       01  WS-REENTER-CHOICE     PIC X(3) VALUE 'N'.
        
        PROCEDURE DIVISION.
            PERFORM CHECK-FILE-STATUS
@@ -150,8 +161,9 @@
                WHEN '2' 
                    PERFORM ADMIN-MAIN-PAGE
                WHEN '3' 
-                   CONTINUE
+                   STOP RUN
                WHEN OTHER 
+                   PERFORM CLEAR
                    PERFORM INVALID-INPUT-MESSAGE
            END-EVALUATE
            END-PERFORM
@@ -180,8 +192,9 @@
                WHEN '2' 
                    PERFORM PASSENGER-SIGNUP-PAGE
                WHEN '3' 
-                   CONTINUE
+                   PERFORM MAIN-PAGE
                WHEN OTHER 
+                   PERFORM CLEAR
                    PERFORM INVALID-INPUT-MESSAGE
            END-EVALUATE
            END-PERFORM
@@ -201,7 +214,6 @@
            ACCEPT WS-EMAIL
            DISPLAY " Enter your password: " WITH NO ADVANCING
            ACCEPT WS-PASSWORD
-           
 
            MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
 
@@ -215,6 +227,7 @@
                            IF FS-P-EMAIL = WS-EMAIL AND FS-P-PASSWORD 
                                = WS-HASHED-PASSWORD THEN    
                                MOVE 1 TO WS-BOOL
+                               MOVE 'Y' TO WS-EOF
                            END-IF
                            READ FS-PASSENGER-FILE NEXT RECORD
                            AT END MOVE 'Y' TO WS-EOF
@@ -224,13 +237,34 @@
                
            CLOSE FS-PASSENGER-FILE
 
+           MOVE FS-P-USER-ID TO FS-CURRENT-USER
+
+           OPEN OUTPUT FS-CURRENT-USER-FILE
+               WRITE FS-CURRENT-USER
+               END-WRITE
+           CLOSE FS-CURRENT-USER-FILE
+
            IF WS-BOOL = 1 THEN
                PERFORM SUCCESS-LOGIN-MESSAGE
            ELSE 
+               PERFORM CLEAR
                PERFORM INVALID-ACCOUNT-MESSAGE
-           END-IF
-           
-           ACCEPT WS-BUFFER.
+               DISPLAY'Do you want to login again? [YES/NO]: ' WITH NO 
+               ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM PASSENGER-LOGIN-PAGE
+                   WHEN 'NO'
+                       PERFORM MAIN-PAGE
+                   WHEN OTHER
+                       DISPLAY'Your choice is invalid'
+                   END-EVALUATE
+           END-IF.
 
        PASSENGER-SIGNUP-PAGE.
            PERFORM CLEAR
@@ -246,7 +280,7 @@
            ACCEPT WS-FIRST-NAME
            DISPLAY " Enter last name: " WITH NO ADVANCING
            ACCEPT WS-LAST-NAME
-           DISPLAY "Enter your phone number: " WITH NO ADVANCING
+           DISPLAY " Enter your phone number: " WITH NO ADVANCING
            ACCEPT WS-PHONE-NUMBER
            DISPLAY " Enter your email: " WITH NO ADVANCING
            ACCEPT WS-EMAIL
@@ -271,7 +305,21 @@
 
            IF WS-BOOL = 0 THEN
                PERFORM EMAIL-TAKEN-MESSAGE
-               PERFORM PASSENGER-SIGNUP-PAGE
+               DISPLAY'Do you want to sign up again? [YES/NO]: ' WITH NO 
+               ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM PASSENGER-SIGNUP-PAGE
+                   WHEN 'NO'
+                       PERFORM PASSENGER-MAIN-PAGE
+                   WHEN OTHER
+                       DISPLAY'Your choice is invalid'
+                   END-EVALUATE
            END-IF
 
            STRING "python3 backend/python_script_for_email.py " WS-EMAIL
@@ -280,6 +328,7 @@
            CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
 
            IF WS-RETURN-CODE = 0 
+               PERFORM CLEAR
                PERFORM USER-SUCCESS-OTP-MESSAGE
                OPEN INPUT FS-OTP-FILE
                    READ FS-OTP-FILE INTO FS-OTP
@@ -289,21 +338,20 @@
                ACCEPT WS-OTP
 
                IF WS-OTP = FS-OTP
+               PERFORM CLEAR
                PERFORM CORRECT-OTP-MESSAGE
                DISPLAY " Enter your password: " WITH NO ADVANCING
                ACCEPT WS-PASSWORD
                DISPLAY " Confirm your password: " WITH NO ADVANCING
                ACCEPT WS-CONFIRM-PASSWORD
-      
-               IF LENGTH OF WS-PASSWORD = 8 AND WS-CONFIRM-PASSWORD = 8 
-               THEN
+
                    IF WS-PASSWORD = WS-CONFIRM-PASSWORD
                        PERFORM SUCCESS-ACCOUNT-MESSAGE
                        PERFORM RECORD-PASSENGER
                        PERFORM MAIN-PAGE
                    ELSE
                        PERFORM PASSWORD-MISMATCH-MESSAGE
-
+           
                         PERFORM UNTIL WS-RETURN-MAINPAGE = 'NO'
                             PERFORM RETURN-TO-MAINPAGE
 
@@ -317,10 +365,6 @@
                                     DISPLAY 'Invalid Input'
                             END-EVALUATE
                         END-PERFORM
-
-                   END-IF
-               ELSE
-                   PERFORM PASSWORD-EXCEED-MESSAGE
                END-IF
                ELSE
                    PERFORM INCORRECT-OTP-MESSAGE
@@ -329,12 +373,7 @@
            ELSE
                PERFORM FAILED-OTP-MESSAGE
 
-           END-IF
-
-           
-
-       
-           ACCEPT WS-BUFFER.
+           END-IF.
 
        ADMIN-MAIN-PAGE.
            PERFORM CLEAR
@@ -354,13 +393,10 @@
                
                WHEN '1' PERFORM ADMIN-LOGIN-PAGE
                WHEN '2' PERFORM ADMIN-SIGNUP-PAGE
-               WHEN '3' PERFORM RETURN-TO-MAINPAGE
+               WHEN '3' PERFORM MAIN-PAGE
                WHEN OTHER 
-                   PERFORM INVALID-INPUT-MESSAGE
-                   PERFORM ADMIN-MAIN-PAGE
-           
-           ACCEPT WS-BUFFER.
-       
+                   PERFORM CLEAR
+                   PERFORM INVALID-INPUT-MESSAGE.
 
        ADMIN-LOGIN-PAGE.
            PERFORM CLEAR
@@ -402,11 +438,22 @@
                PERFORM MAIN-PAGE
            ELSE 
                PERFORM INVALID-ACCOUNT-MESSAGE
-           END-IF
-           
-           
-           
-           ACCEPT WS-BUFFER.
+               DISPLAY'Do you want to sign up again? [YES/NO]: ' WITH NO 
+               ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM ADMIN-LOGIN-PAGE
+                   WHEN 'NO'
+                       PERFORM ADMIN-MAIN-PAGE
+                   WHEN OTHER
+                       DISPLAY'Your choice is invalid'
+                   END-EVALUATE
+           END-IF.
 
        ADMIN-SIGNUP-PAGE.
            MOVE SPACES TO WS-EOF
@@ -430,11 +477,13 @@
                    READ FS-OTP-FILE INTO FS-OTP
                    END-READ
                CLOSE FS-OTP-FILE
+               PERFORM CLEAR
                PERFORM USER-SUCCESS-OTP-MESSAGE
                DISPLAY " Enter OTP: " WITH NO ADVANCING
                ACCEPT WS-OTP
        
                IF WS-OTP = FS-OTP
+                   PERFORM CLEAR
                    PERFORM CORRECT-OTP-MESSAGE
                    MOVE 1 TO WS-BOOL
                ELSE
@@ -442,6 +491,7 @@
            END-IF    
            MOVE 1 TO WS-BOOL
            
+           PERFORM CLEAR
            IF WS-BOOL = 1 THEN
                DISPLAY " Enter first name: " WITH NO ADVANCING
                ACCEPT WS-FIRST-NAME
@@ -472,7 +522,21 @@
 
             IF WS-BOOL = 0 THEN
                PERFORM EMAIL-TAKEN-MESSAGE
-               PERFORM ADMIN-MAIN-PAGE
+               DISPLAY'Do you want to sign up again? [YES/NO]: ' WITH NO 
+               ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM ADMIN-SIGNUP-PAGE
+                   WHEN 'NO'
+                       PERFORM ADMIN-MAIN-PAGE
+                   WHEN OTHER
+                       DISPLAY'Your choice is invalid'
+                   END-EVALUATE
            END-IF
 
            STRING "python3 backend/python_script_for_email.py "WS-EMAIL
@@ -485,11 +549,13 @@
                    READ FS-OTP-FILE INTO FS-OTP
                    END-READ
                CLOSE FS-OTP-FILE
-               PERFORM USER-SUCCESS-OTP-MESSAGE
+               PERFORM CLEAR
+               PERFORM ADMIN-SUCCESS-OTP-MESSAGE
                DISPLAY " Enter OTP: " WITH NO ADVANCING
                ACCEPT WS-OTP
 
                IF WS-OTP = FS-OTP
+                   PERFORM CLEAR
                    PERFORM CORRECT-OTP-MESSAGE
 
                    DISPLAY " Enter your password: " WITH NO ADVANCING
@@ -497,27 +563,32 @@
                    DISPLAY " Confirm your password: " WITH NO ADVANCING
                    ACCEPT WS-CONFIRM-PASSWORD
 
-                   IF LENGTH OF WS-PASSWORD = 8 AND LENGTH OF 
-                   WS-CONFIRM-PASSWORD = 8 THEN
                        IF WS-PASSWORD = WS-CONFIRM-PASSWORD THEN
-                           PERFORM RECORD-ADMIN
                            PERFORM SUCCESS-ACCOUNT-MESSAGE
+                           PERFORM RECORD-ADMIN
+                           
                            PERFORM ADMIN-MAIN-PAGE
-                       ELSE
-                           PERFORM INVALID-ACCOUNT-MESSAGE
-                           PERFORM ADMIN-MAIN-PAGE
-                       END-IF
                    ELSE
                        PERFORM INVALID-ACCOUNT-MESSAGE
-                       PERFORM ADMIN-MAIN-PAGE
+                       DISPLAY'Do you want to sign up again? [YES/NO]: ' 
+                       WITH NO ADVANCING
+                       ACCEPT WS-REENTER-CHOICE
+       
+                       MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+                       WS-REENTER-CHOICE
+       
+                       EVALUATE WS-REENTER-CHOICE
+                           WHEN 'YES'
+                               PERFORM ADMIN-LOGIN-PAGE
+                           WHEN 'NO'
+                               PERFORM ADMIN-MAIN-PAGE
+                           WHEN OTHER
+                               DISPLAY'Your choice is invalid'
+                           END-EVALUATE
                    END-IF
-      
-                   
                ELSE
                    PERFORM INCORRECT-OTP-MESSAGE
-           END-IF   
-       
-           ACCEPT WS-BUFFER.
+           END-IF.
 
       *INITIALIZE-RECORDS.
       *    MOVE LS-FIRST-NAME TO WS-FIRST-NAME
@@ -644,6 +715,8 @@
                END-IF
            END-IF
            CLOSE FS-ADMIN-FILE
+
+           MOVE SPACES TO WS-FILE-STATUS
            .
            
        
@@ -695,7 +768,7 @@
            DISPLAY "***************************************************"
            DISPLAY "*            Invalid Input. Try Again!            *"
            DISPLAY "***************************************************"
-           DISPLAY " Press 'enter' key to continue..."
+           DISPLAY " Press 'enter' key to go back..."
 
            ACCEPT WS-BUFFER.
 
