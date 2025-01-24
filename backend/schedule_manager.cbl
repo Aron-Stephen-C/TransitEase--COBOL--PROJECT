@@ -29,8 +29,8 @@
        FD  FS-ROUTES-FILE.
        01  FS-ROUTES-RECORD.
            02    FS-ROUTE-ID    PIC X(15).
-           02    FS-ROUTE-ORIGIN    PIC X(100).
-           02    FS-ROUTE-DESTINATION    PIC X(100).
+           02    FS-ROUTE-ORIGIN    PIC X(30).
+           02    FS-ROUTE-DESTINATION    PIC X(30).
            02    FS-ROUTE-DISTANCE    PIC 9(10)V9(2).
            02    FS-ROUTE-BASE-PRICE    PIC 9(10)V9(2).
            02    FS-ROUTE-TIME-STAMP.
@@ -120,10 +120,10 @@
                03    WS-TS-SECOND    PIC 99.
        01  WS-ROUTES-RECORD.
            02    WS-ROUTE-ID    PIC X(15).
-           02    WS-ROUTE-ORIGIN    PIC X(100).
-           02    WS-ROUTE-DESTINATION    PIC X(100).
-           02    WS-ROUTE-DISTANCE    PIC 9(10)V9(2).
-           02    WS-ROUTE-BASE-PRICE    PIC 9(10)V9(2).
+           02    WS-ROUTE-ORIGIN    PIC X(30).
+           02    WS-ROUTE-DESTINATION    PIC X(30).
+           02    WS-ROUTE-DISTANCE    PIC 9(10)V99.
+           02    WS-ROUTE-BASE-PRICE    PIC 9(10)V99.
            02    WS-ROUTE-TIME-STAMP.
                03    WS-R-DATE    PIC 99/99/99.
                03    WS-R-FILLER-SPACE    PIC X(3).
@@ -181,57 +181,190 @@
                    04    WS-S-MINUTES    PIC 99.
                    04    WS-S-COLON-2    PIC X.
                    04    WS-S-SECOND    PIC 99.
+       01  WS-SCHEDULE-MM-CHOICE PIC X.
+       01  WS-BUFFER    PIC X.
 
        LINKAGE SECTION.
        
        PROCEDURE DIVISION.
            PERFORM CHECK-FILE-STATUS
 
+           PERFORM SCHEDULE-MAIN-MENU
+
            STOP RUN.
+
+       CLEAR.
+           CALL "SYSTEM" USING "clear"
+           .
+
+       INVALID-INPUT-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*            Invalid Input. Try Again!            *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       SCHEDULE-MAIN-MENU.
+           PERFORM UNTIL WS-SCHEDULE-MM-CHOICE = 4
+           
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*                 Welcome, Admin!                 *"
+           DISPLAY "***************************************************"
+           DISPLAY "*                [1] Add Route                    *"
+           DISPLAY "*                [2] Add Vehicle                  *"
+           DISPLAY "*                [3] Add Schedule                 *"
+           DISPLAY "*                [4] Exit                         *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter your choice: " WITH NO ADVANCING
+           ACCEPT WS-SCHEDULE-MM-CHOICE
+
+               EVALUATE WS-SCHEDULE-MM-CHOICE
+                   WHEN 1 PERFORM ADD-ROUTE-PAGE
+                   WHEN 2 PERFORM ADD-VEHICLE-PAGE
+                   WHEN 3 PERFORM ADD-SCHEDULE-PAGE
+                   WHEN 4
+                       STOP RUN
+                   WHEN OTHER 
+                       PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+               
+
+           END-PERFORM
+           .
+
+       ADD-ROUTE-PAGE.
+           MOVE SPACES TO WS-ROUTES-RECORD
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*                 Add Route Page                  *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter Route Origin: " WITH NO ADVANCING
+           ACCEPT WS-ROUTE-ORIGIN
+           DISPLAY " Enter Route Destination: " WITH NO ADVANCING
+           ACCEPT WS-ROUTE-DESTINATION
+           DISPLAY " Enter Route Distance: " WITH NO ADVANCING
+           ACCEPT WS-ROUTE-DISTANCE
+           DISPLAY " Enter Route Base Price: " WITH NO ADVANCING
+           ACCEPT WS-ROUTE-BASE-PRICE
+
+           PERFORM RECORD-ROUTE
+           DISPLAY "***************************************************"
+           DISPLAY "*                    Display                      *"
+           DISPLAY "***************************************************"
+           PERFORM TRAVERSAL-ROUTE-RECORD
+           PERFORM SUCCESS-ADD-ROUTE-MESSAGE
+           .
+
+       SUCCESS-ADD-ROUTE-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*              Success: Route Added!              *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       ADD-VEHICLE-PAGE.
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*                Add Vehicle Page                 *"
+           DISPLAY "***************************************************"
+           DISPLAY " Enter Vehicle Class: " WITH NO ADVANCING
+           ACCEPT WS-VEHICLE-CLASS
+           DISPLAY " Enter Vehicle Capacity: " WITH NO ADVANCING
+           ACCEPT WS-VEHICLE-CAPACITY
+           DISPLAY " Enter Vehicle License Plate: " WITH NO ADVANCING
+           ACCEPT WS-VEHICLE-LICENSE-PLATE
+           DISPLAY " Enter Vehicle Price Factor: " WITH NO ADVANCING
+           ACCEPT WS-VEHICLE-PRICE-FACTOR
+
+           PERFORM RECORD-VEHICLE
+           DISPLAY "***************************************************"
+           DISPLAY "*                    Display                      *"
+           DISPLAY "***************************************************"
+           PERFORM TRAVERSAL-VEHICLE-RECORD
+           PERFORM SUCCESS-ADD-VEHICLE-MESSAGE
+           .
+
+       SUCCESS-ADD-VEHICLE-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*            Success: Vehicle Added!              *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
+
+       ADD-SCHEDULE-PAGE. 
+           PERFORM CLEAR
+           DISPLAY "***************************************************"
+           DISPLAY "*               Add Schedule Page                 *"
+           DISPLAY "***************************************************"
+           PERFORM TRAVERSAL-ROUTE-RECORD
+           PERFORM TRAVERSAL-VEHICLE-RECORD
+           DISPLAY " Enter Route ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-ROUTE-ID
+           DISPLAY " Enter Vehicle ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-VEHICLE-ID
+
+           IF WS-FK-ROUTE-ID = FS-ROUTE-ID AND
+           WS-FK-VEHICLE-ID = FS-VEHICLE-ID
+               DISPLAY " Enter departure time: " WITH NO ADVANCING
+               ACCEPT WS-S-DEPARTURE-TIME
+               DISPLAY " Enter arrival time: " WITH NO ADVANCING
+               ACCEPT WS-S-ARRIVAL-TIME
+           ELSE
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE-PAGE
+           END-IF
+
+           PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
+           .
+
+       SUCCESS-ADD-SCHEDULE-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           Success: Schedule Added!              *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.
 
        TRAVERSAL-VEHICLE-RECORD.
            MOVE SPACES TO WS-EOF
-           OPEN INPUT FS-VEHICLES-FILE    
+           OPEN INPUT FS-VEHICLES-FILE
+           PERFORM UNTIL WS-EOF = 'Y'    
                READ FS-VEHICLES-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END 
-               DISPLAY FS-VEHICLE-ID 
-               DISPLAY FS-VEHICLE-TYPE
-               DISPLAY FS-VEHICLE-CAPACITY
-               DISPLAY FS-VEHICLE-LICENSE-PLATE
-               DISPLAY FS-VEHICLE-PRICE-FACTOR
-               DISPLAY FS-VEHICLE-TIME-STAMP
+               DISPLAY "VEHICLE ID: " FS-VEHICLE-ID 
+               DISPLAY "VEHICLE TYPE: " FS-VEHICLE-TYPE
+               DISPLAY "VEHICLE CAPACITY: " FS-VEHICLE-CAPACITY
+               DISPLAY "VEHICLE LICENSE PLATE: " 
+               FS-VEHICLE-LICENSE-PLATE
+               DISPLAY "VEHICLE PRICE FACTOR: " FS-VEHICLE-PRICE-FACTOR
+               DISPLAY "VEHICLE TIME STAMP: " FS-VEHICLE-TIME-STAMP
+               DISPLAY "-----------------------------------------------"
                END-READ
+            END-PERFORM
            CLOSE FS-VEHICLES-FILE
-           .
-
-       INITIALIZE-VEHICLE.
-           MOVE 'BUS' TO WS-VEHICLE-TYPE
-           MOVE 35 TO WS-VEHICLE-CAPACITY
-           MOVE 'hgeuahghihisiuh' TO WS-VEHICLE-LICENSE-PLATE
-           MOVE 890 TO WS-VEHICLE-PRICE-FACTOR
-           .
-
-       INITIALIZE-RECORD.
-           MOVE 'TAGUIG' TO WS-ROUTE-ORIGIN
-           MOVE 'MAKATI' TO WS-ROUTE-DESTINATION
-           MOVE 15 TO WS-ROUTE-DISTANCE
-           MOVE 10 TO WS-ROUTE-BASE-PRICE
            .
 
        TRAVERSAL-ROUTE-RECORD.
            MOVE SPACES TO WS-EOF
-           OPEN INPUT FS-ROUTES-FILE    
+           OPEN INPUT FS-ROUTES-FILE 
+           PERFORM UNTIL WS-EOF = 'Y'   
                READ FS-ROUTES-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END 
-               DISPLAY FS-ROUTE-ID 
-               DISPLAY FS-ROUTE-ORIGIN
-               DISPLAY FS-ROUTE-DESTINATION
-               DISPLAY FS-ROUTE-DISTANCE
-               DISPLAY FS-ROUTE-BASE-PRICE
-               DISPLAY FS-ROUTE-TIME-STAMP
+               DISPLAY "ROUTE ID: " FS-ROUTE-ID 
+               DISPLAY "ROUTE ORIGIN: " FS-ROUTE-ORIGIN
+               DISPLAY "ROUTE DESTINATION: " FS-ROUTE-DESTINATION
+               DISPLAY "ROUTE DISTANCE: " FS-ROUTE-DISTANCE
+               DISPLAY "ROUTE BASE PRICE: " FS-ROUTE-BASE-PRICE
+               DISPLAY "ROUTE TIME STAMP: " FS-ROUTE-TIME-STAMP
+               DISPLAY "-----------------------------------------------"
                END-READ
+            END-PERFORM
            CLOSE FS-ROUTES-FILE
            .
 
