@@ -116,8 +116,8 @@
        01  WS-BOOL    PIC 9.
        01  WS-OTP    PIC X(6).
        01  WS-RETURN-MAINPAGE PIC X(3).
-
        01  WS-CONFIRM-PASSWORD    PIC X(64).
+       01  WS-REENTER-PASSWORD-CHOICE     PIC X(3) VALUE 'N'.
        
        PROCEDURE DIVISION.
            PERFORM CHECK-FILE-STATUS
@@ -246,7 +246,7 @@
            ACCEPT WS-FIRST-NAME
            DISPLAY " Enter last name: " WITH NO ADVANCING
            ACCEPT WS-LAST-NAME
-           DISPLAY "Enter your phone number: " WITH NO ADVANCING
+           DISPLAY " Enter your phone number: " WITH NO ADVANCING
            ACCEPT WS-PHONE-NUMBER
            DISPLAY " Enter your email: " WITH NO ADVANCING
            ACCEPT WS-EMAIL
@@ -280,6 +280,7 @@
            CALL "SYSTEM" USING WS-COMMAND RETURNING WS-RETURN-CODE
 
            IF WS-RETURN-CODE = 0 
+               PERFORM CLEAR
                PERFORM USER-SUCCESS-OTP-MESSAGE
                OPEN INPUT FS-OTP-FILE
                    READ FS-OTP-FILE INTO FS-OTP
@@ -289,13 +290,14 @@
                ACCEPT WS-OTP
 
                IF WS-OTP = FS-OTP
+               PERFORM CLEAR
                PERFORM CORRECT-OTP-MESSAGE
                DISPLAY " Enter your password: " WITH NO ADVANCING
                ACCEPT WS-PASSWORD
                DISPLAY " Confirm your password: " WITH NO ADVANCING
                ACCEPT WS-CONFIRM-PASSWORD
-      
-               IF LENGTH OF WS-PASSWORD = 8 AND WS-CONFIRM-PASSWORD = 8 
+
+               IF LENGTH OF WS-PASSWORD <= 8 AND WS-CONFIRM-PASSWORD <=8 
                THEN
                    IF WS-PASSWORD = WS-CONFIRM-PASSWORD
                        PERFORM SUCCESS-ACCOUNT-MESSAGE
@@ -303,7 +305,7 @@
                        PERFORM MAIN-PAGE
                    ELSE
                        PERFORM PASSWORD-MISMATCH-MESSAGE
-
+           
                         PERFORM UNTIL WS-RETURN-MAINPAGE = 'NO'
                             PERFORM RETURN-TO-MAINPAGE
 
@@ -331,9 +333,6 @@
 
            END-IF
 
-           
-
-       
            ACCEPT WS-BUFFER.
 
        ADMIN-MAIN-PAGE.
