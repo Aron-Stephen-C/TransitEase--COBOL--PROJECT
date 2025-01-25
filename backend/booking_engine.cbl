@@ -73,12 +73,11 @@
        LINKAGE SECTION.
        
        PROCEDURE DIVISION.
-           PERFORM CHECK-FILE-STATUS
-           PERFORM GENERATE-ID-SEQUENCE
-           DISPLAY WS-GENERATED-ID
-           PERFORM GENERATE-TIME-STAMP
-           DISPLAY WS-TIME-STAMP
+           
+           GOBACK
            STOP RUN.
+
+       
 
        RECORD-BOOKING.
            MOVE SPACES TO WS-EOF

@@ -13,7 +13,6 @@
            ACCESS IS SEQUENTIAL
            FILE STATUS IS WS-FILE-STATUS.
 
-
            SELECT FS-PASSENGER-FILE ASSIGN TO 'data/passenger_file.txt'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
@@ -277,6 +276,7 @@
            IF WS-BOOL = 1 THEN
                PERFORM CLEAR
                PERFORM SUCCESS-LOGIN-MESSAGE
+
            ELSE 
                PERFORM CLEAR
                PERFORM INVALID-ACCOUNT-MESSAGE
@@ -541,7 +541,7 @@
                        END-PERFORM
                END-READ
                
-           CLOSE FS-PASSENGER-FILE
+           CLOSE FS-ADMIN-FILE
 
            MOVE FS-A-USER-ID TO FS-CURRENT-USER
 
@@ -552,6 +552,8 @@
 
            IF WS-BOOL = 1 THEN
                PERFORM SUCCESS-LOGIN-MESSAGE
+               CALL 'SYSTEM' USING 'backend/schedule_manager'
+               END-CALL
                PERFORM MAIN-PAGE
            ELSE 
                PERFORM CLEAR
@@ -593,7 +595,7 @@
            DISPLAY "*             Sign Up Page - Admin                *"
            DISPLAY "***************************************************"
            DISPLAY ' '
-           DISPLAY 'OTP sending to TransitEase2025@gmail.com/Admin...'
+           DISPLAY 'OTP sending to Admin. Please reach to management...'
 
            MOVE 'TransitEase2025@gmail.com' TO WS-EMAIL
            

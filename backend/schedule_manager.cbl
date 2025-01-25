@@ -229,7 +229,8 @@
            PERFORM CHECK-FILE-STATUS
 
            PERFORM SCHEDULE-MAIN-MENU
-
+           
+           GOBACK
            STOP RUN.
 
        CLEAR.

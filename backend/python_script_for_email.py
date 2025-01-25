@@ -39,3 +39,25 @@ def send_otp_for_email_validation(user_email_address):
 if __name__ == "__main__":
     recipient_email = sys.argv[1]
     send_otp_for_email_validation(recipient_email)
+
+# import sys
+# import pickle
+# import smtplib
+# import random
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+
+# def send_email(user_email_address):
+
+#     otp = f'{random.randint(0,999999):06d}'
+
+#     sender_email = 'TransitEase2025@gmail.com'
+
+#     with open ('data/app_password.pkl', 'rb') as file:
+#         sender_password = pickle.load(file)
+
+    
+
+# if __name__ == '__main__':
+#     recipient_email_address = 'aronstephenscordova@gmail.com'
+#     send_email(recipient_email_address)
