@@ -46,11 +46,11 @@
        FD  FS-VEHICLES-FILE.
        01  FS-VEHICLES-RECORD.
            02    FS-VEHICLE-ID    PIC X(15).
-           02    FS-VEHICLE-TYPE    PIC X.
+           02    FS-VEHICLE-SERIAL    PIC X(6).
            02    FS-VEHICLE-CLASS    PIC X.
            02    FS-VEHICLE-CAPACITY    PIC 9(3).
            02    FS-VEHICLE-LICENSE-PLATE    PIC X(20).
-           02    FS-VEHICLE-PRICE-FACTOR    PIC 9(19)V9(2).
+           02    FS-VEHICLE-PRICE-FACTOR    PIC 9(10)V9(2).
            02    FS-VEHICLE-TIME-STAMP.
                03    FS-V-DATE    PIC 99/99/99.
                03    FS-V-FILLER-SPACE    PIC X(3).
@@ -73,8 +73,6 @@
                    04    FS-S-D-HOUR    PIC 99.
                    04    FS-S-D-COLON-1    PIC X.
                    04    FS-S-D-MINUTES    PIC 99.
-                   04    FS-S-D-COLON-2    PIC X.
-                   04    FS-S-D-SECOND    PIC 99.
            02    FS-S-ARRIVAL-TIME.
                03    FS-S-A-DATE    PIC 99/99/99.
                03    FS-S-A-FILLER-SPACE    PIC X(3).
@@ -82,8 +80,6 @@
                    04    FS-S-A-HOUR    PIC 99.
                    04    FS-S-A-COLON-1    PIC X.
                    04    FS-S-A-MINUTES    PIC 99.
-                   04    FS-S-A-COLON-2    PIC X.
-                   04    FS-S-A-SECOND    PIC 99.
            02    FS-S-STATUS    PIC X(3).
            02    FS-S-TIME-STAMP.
                03    FS-S-DATE    PIC 99/99/99.
@@ -94,11 +90,31 @@
                    04    FS-S-MINUTES    PIC 99.
                    04    FS-S-COLON-2    PIC X.
                    04    FS-S-SECOND    PIC 99.
-
+      
        WORKING-STORAGE SECTION.
        01  WS-FILE-STATUS    PIC XX.
-       01  WS-DATE    PIC    9(6).
-       01  WS-TIME    PIC    9(8).
+       01  WS-DATE.
+           02    WS-YEAR    PIC 99.
+           02    WS-MONTH    PIC 99.
+           02    WS-DAY    PIC 99.
+       01  WS-INPUT-DATE.
+           02    WS-I-MONTH    PIC 99.
+           02    WS-I-DAY    PIC 99.
+           02    WS-I-YEAR    PIC 99.
+       01  WS-MONTH-CHECKER PIC 9999.
+           88  WS-MONTHS-31    VALUE 1,3,5,7,8,10,12.
+           88  WS-MONTHS-30    VALUE 4,6,9,11.
+       01  WS-LIMIT-DAYS PIC 99.
+       01  WS-TIME.
+           02    WS-HOUR    PIC 99.
+           02    WS-MINUTE    PIC 99.
+           02    WS-SECOND    PIC 99.
+           02    WS-MSECOND    PIC 99.
+       01  WS-INPUT-TIME.
+           02    WS-I-HOUR    PIC 99.
+           02    WS-I-MINUTE    PIC 99.
+           02    WS-I-SECOND    PIC 99.
+           02    WS-I-MSECOND    PIC 99.
        01  WS-INCREMENT-VALUE    PIC 9(3).
        01  WS-EOF    PIC X.
        01  WS-GENERATED-ID.
@@ -118,6 +134,14 @@
                03    WS-TS-MINUTES    PIC 99.
                03    WS-TS-COLON-2    PIC X VALUE ':'.
                03    WS-TS-SECOND    PIC 99.
+       01  WS-TIME-STAMP-D-A.
+           02    WS-DA-DATE    PIC 99/99/99.
+           02    WS-DA-FILLER-SPACE    PIC X(3) VALUE SPACES.
+           02    WS-DA-TIME.
+               03    WS-DA-HOUR    PIC 99.
+               03    WS-DA-COLON-1    PIC X VALUE ':'.
+               03    WS-DA-MINUTES    PIC 99.
+           02    WS-DA-TIME-FORMAT     PIC XX.
        01  WS-ROUTES-RECORD.
            02    WS-ROUTE-ID    PIC X(15).
            02    WS-ROUTE-ORIGIN    PIC X(30).
@@ -135,11 +159,11 @@
                    04    WS-R-SECOND    PIC 99.
        01  WS-VEHICLES-RECORD.
            02    WS-VEHICLE-ID    PIC X(15).
-           02    WS-VEHICLE-TYPE    PIC X.
+           02    WS-VEHICLE-SERIAL    PIC X(6).
            02    WS-VEHICLE-CLASS    PIC X.
            02    WS-VEHICLE-CAPACITY    PIC 9(3).
            02    WS-VEHICLE-LICENSE-PLATE    PIC X(20).
-           02    WS-VEHICLE-PRICE-FACTOR    PIC 9(19)V9(2).
+           02    WS-VEHICLE-PRICE-FACTOR    PIC 9(10)V9(2).
            02    WS-VEHICLE-TIME-STAMP.
                03    WS-V-DATE    PIC 99/99/99.
                03    WS-V-FILLER-SPACE    PIC X(3).
@@ -160,8 +184,7 @@
                    04    WS-S-D-HOUR    PIC 99.
                    04    WS-S-D-COLON-1    PIC X.
                    04    WS-S-D-MINUTES    PIC 99.
-                   04    WS-S-D-COLON-2    PIC X.
-                   04    WS-S-D-SECOND    PIC 99.
+               03    WS-S-D-TIME-FORMAT     PIC XX.
            02    WS-S-ARRIVAL-TIME.
                03    WS-S-A-DATE    PIC 99/99/99.
                03    WS-S-A-FILLER-SPACE    PIC X(3).
@@ -169,8 +192,7 @@
                    04    WS-S-A-HOUR    PIC 99.
                    04    WS-S-A-COLON-1    PIC X.
                    04    WS-S-A-MINUTES    PIC 99.
-                   04    WS-S-A-COLON-2    PIC X.
-                   04    WS-S-A-SECOND    PIC 99.
+               03    WS-S-A-TIME-FORMAT     PIC XX.
            02    WS-S-STATUS    PIC X(3).
            02    WS-S-TIME-STAMP.
                03    WS-S-DATE    PIC 99/99/99.
@@ -183,6 +205,12 @@
                    04    WS-S-SECOND    PIC 99.
        01  WS-SCHEDULE-MM-CHOICE PIC X.
        01  WS-BUFFER    PIC X.
+       01  WS-COUNTER-I PIC 9(3).
+
+       01  WS-VEHICLE-MENU-CHOICE     PIC X.
+       01  WS-ROUTE-MENU-CHOICE     PIC X.
+       01  WS-SCHEDULE-MENU-CHOICE     PIC X.
+       01  WS-BOOL     PIC 9.
 
        LINKAGE SECTION.
        
@@ -234,12 +262,50 @@
            END-PERFORM
            .
 
+
        ADD-ROUTE-PAGE.
            MOVE SPACES TO WS-ROUTES-RECORD
+           PERFORM UNTIL WS-ROUTE-MENU-CHOICE = '4'
            PERFORM CLEAR
            DISPLAY "***************************************************"
            DISPLAY "*                 Add Route Page                  *"
            DISPLAY "***************************************************"
+
+           PERFORM TRAVERSAL-ROUTE-RECORD
+
+           DISPLAY ' '
+           DISPLAY '1 - Add Route'
+           DISPLAY '2 - Update Route'
+           DISPLAY '3 - Remove Route'
+           DISPLAY '4 - back to route page'
+           DISPLAY ' '
+           DISPLAY 'Enter your choice : ' WITH NO ADVANCING
+           ACCEPT WS-ROUTE-MENU-CHOICE
+
+           DISPLAY ' '
+
+           EVALUATE WS-ROUTE-MENU-CHOICE
+               WHEN '1'
+                   PERFORM ADD-ROUTE
+               WHEN '2'
+                   PERFORM UPDATE-ROUTE
+               WHEN '3'
+                   PERFORM REMOVE-ROUTE
+               WHEN '4'
+                   CONTINUE
+               WHEN OTHER
+                   DISPLAY ' '
+                   DISPLAY 'Error : <Invalid Choice>'
+                   ACCEPT WS-BUFFER
+                   PERFORM ADD-ROUTE-PAGE
+           END-EVALUATE
+
+           END-PERFORM
+           .
+
+       ADD-ROUTE.
+           DISPLAY '[ADD ROUTE]'
+           DISPLAY ' '
            DISPLAY " Enter Route Origin: " WITH NO ADVANCING
            ACCEPT WS-ROUTE-ORIGIN
            DISPLAY " Enter Route Destination: " WITH NO ADVANCING
@@ -249,12 +315,65 @@
            DISPLAY " Enter Route Base Price: " WITH NO ADVANCING
            ACCEPT WS-ROUTE-BASE-PRICE
 
+           IF WS-ROUTE-ORIGIN = SPACES OR WS-ROUTE-DESTINATION = SPACES
+           OR WS-ROUTE-DISTANCE = ZEROES OR WS-ROUTE-BASE-PRICE = ZEROES
+               DISPLAY 'Must fill all of the fields'
+               PERFORM ADD-ROUTE-PAGE
+           END-IF
+
            PERFORM RECORD-ROUTE
-           DISPLAY "***************************************************"
-           DISPLAY "*                    Display                      *"
-           DISPLAY "***************************************************"
-           PERFORM TRAVERSAL-ROUTE-RECORD
            PERFORM SUCCESS-ADD-ROUTE-MESSAGE
+
+           ACCEPT WS-BUFFER
+           .
+
+       UPDATE-ROUTE.
+           DISPLAY '[UPDATE ROUTE]'
+           DISPLAY ' '
+           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           ACCEPT FS-ROUTE-ID
+
+           OPEN I-O FS-ROUTES-FILE
+               READ FS-ROUTES-FILE
+               INVALID KEY DISPLAY 'Route Record Not Found'
+               NOT INVALID KEY
+                  DISPLAY ' '
+                   DISPLAY " Enter Route Origin: " WITH NO ADVANCING
+                   ACCEPT WS-ROUTE-ORIGIN
+                   DISPLAY " Enter Route Destination: "
+                    WITH NO ADVANCING
+                   ACCEPT WS-ROUTE-DESTINATION
+                   DISPLAY " Enter Route Distance: " WITH NO ADVANCING
+                   ACCEPT WS-ROUTE-DISTANCE
+                   DISPLAY " Enter Route Base Price: " WITH NO ADVANCING
+                   ACCEPT WS-ROUTE-BASE-PRICE
+       
+                   IF WS-ROUTE-ORIGIN = SPACES OR 
+                   WS-ROUTE-DESTINATION = SPACES
+                   OR WS-ROUTE-DISTANCE = ZEROES OR 
+                   WS-ROUTE-BASE-PRICE = ZEROES
+                       DISPLAY 'Must fill all of the fields'
+                       PERFORM ADD-ROUTE-PAGE
+                   END-IF 
+
+                   REWRITE FS-ROUTES-RECORD
+                   END-REWRITE
+               END-READ
+           CLOSE FS-ROUTES-FILE
+           .
+
+       REMOVE-ROUTE.
+           DISPLAY '[DELETE ROUTE]'
+           DISPLAY ' '
+           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           ACCEPT FS-ROUTE-ID
+           
+           OPEN I-O FS-ROUTES-FILE
+           DELETE FS-ROUTES-FILE
+               INVALID KEY DISPLAY 'Route Record Not Found'
+               NOT INVALID KEY DISPLAY 'Successfully removed'
+           END-DELETE
+           CLOSE FS-ROUTES-FILE
            .
 
        SUCCESS-ADD-ROUTE-MESSAGE.
@@ -266,10 +385,51 @@
            ACCEPT WS-BUFFER.
 
        ADD-VEHICLE-PAGE.
-           PERFORM CLEAR
-           DISPLAY "***************************************************"
-           DISPLAY "*                Add Vehicle Page                 *"
-           DISPLAY "***************************************************"
+
+           PERFORM UNTIL WS-VEHICLE-MENU-CHOICE = '4'
+               PERFORM CLEAR
+               DISPLAY "***********************************************"-
+               "****"
+               DISPLAY "*                    Vehicle Page              "-
+               "   *"
+               DISPLAY "***********************************************"-
+               "****"
+      
+               PERFORM TRAVERSAL-VEHICLE-RECORD
+      
+               DISPLAY ' '
+               DISPLAY '1 - Add Vehicle'
+               DISPLAY '2 - Update Vehicle'
+               DISPLAY '3 - Remove Vehicle'
+               DISPLAY '4 - Back to main page'
+               DISPLAY ' '
+               DISPLAY 'Enter your choice : ' WITH NO ADVANCING
+               ACCEPT WS-VEHICLE-MENU-CHOICE
+
+               DISPLAY ' '
+
+               EVALUATE WS-VEHICLE-MENU-CHOICE
+                   WHEN '1'
+                       PERFORM ADD-VEHICLE
+                   WHEN '2'
+                       PERFORM UPDATE-VEHICLE
+                   WHEN '3'
+                       PERFORM REMOVE-VEHICLE
+                   WHEN '4'
+                       CONTINUE
+                   WHEN OTHER
+                       DISPLAY ' '
+                       DISPLAY 'Error : <Invalid Choice>'
+                       ACCEPT WS-BUFFER
+                       PERFORM ADD-VEHICLE-PAGE
+               END-EVALUATE
+           END-PERFORM
+           .
+
+       ADD-VEHICLE.
+           DISPLAY '[ADD VEHICLE]'
+           DISPLAY " Enter Vehicle Serial: " WITH NO ADVANCING
+           ACCEPT WS-VEHICLE-SERIAL
            DISPLAY " Enter Vehicle Class: " WITH NO ADVANCING
            ACCEPT WS-VEHICLE-CLASS
            DISPLAY " Enter Vehicle Capacity: " WITH NO ADVANCING
@@ -279,12 +439,79 @@
            DISPLAY " Enter Vehicle Price Factor: " WITH NO ADVANCING
            ACCEPT WS-VEHICLE-PRICE-FACTOR
 
-           PERFORM RECORD-VEHICLE
-           DISPLAY "***************************************************"
-           DISPLAY "*                    Display                      *"
-           DISPLAY "***************************************************"
-           PERFORM TRAVERSAL-VEHICLE-RECORD
-           PERFORM SUCCESS-ADD-VEHICLE-MESSAGE
+           IF WS-VEHICLE-CLASS = SPACES OR WS-VEHICLE-CAPACITY = SPACES
+           OR WS-VEHICLE-LICENSE-PLATE = SPACES OR 
+           WS-VEHICLE-PRICE-FACTOR = ZEROES
+               DISPLAY ' '
+               DISPLAY 'Error : <Must fill all the fields>'
+               PERFORM ADD-VEHICLE-PAGE
+           ELSE
+               PERFORM RECORD-VEHICLE
+               PERFORM SUCCESS-ADD-VEHICLE-MESSAGE
+           END-IF
+
+           ACCEPT WS-BUFFER
+           .
+
+       UPDATE-VEHICLE.
+           DISPLAY '[UPDATE VEHICLE]'
+           DISPLAY ' '
+           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           ACCEPT FS-VEHICLE-ID
+
+           OPEN I-O FS-VEHICLES-FILE
+               READ FS-VEHICLES-FILE
+               INVALID KEY 
+                   DISPLAY ' '
+                   DISPLAY 'Vehicle Not Found.'
+               NOT INVALID KEY 
+                   DISPLAY " Enter Vehicle Serial: " WITH NO ADVANCING
+                   ACCEPT WS-VEHICLE-SERIAL
+                   DISPLAY " Enter Vehicle Class: " WITH NO ADVANCING
+                   ACCEPT WS-VEHICLE-CLASS
+                   DISPLAY " Enter Vehicle Capacity: "
+                    WITH NO ADVANCING
+                   ACCEPT WS-VEHICLE-CAPACITY
+                   DISPLAY " Enter Vehicle License Plate: "
+                    WITH NO ADVANCING
+                   ACCEPT WS-VEHICLE-LICENSE-PLATE
+                   DISPLAY " Enter Vehicle Price Factor: "
+                    WITH NO ADVANCING
+                   ACCEPT WS-VEHICLE-PRICE-FACTOR
+       
+                   IF WS-VEHICLE-CLASS = SPACES OR WS-VEHICLE-CAPACITY 
+                   = SPACES OR WS-VEHICLE-LICENSE-PLATE = SPACES OR 
+                   WS-VEHICLE-PRICE-FACTOR = SPACES
+                       DISPLAY ' '
+                       DISPLAY 'Error : <Must fill all the fields>'
+                       PERFORM ADD-VEHICLE-PAGE
+                   ELSE
+                       REWRITE FS-VEHICLES-RECORD
+                       END-REWRITE
+      *                pakibago nalang
+                       DISPLAY 'Success Update'
+                   END-IF
+                           
+           CLOSE FS-VEHICLES-FILE
+           ACCEPT WS-BUFFER
+           .
+
+       REMOVE-VEHICLE.
+           DISPLAY '[REMOVE VEHICLE]'
+           DISPLAY ' '
+           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           ACCEPT FS-VEHICLE-ID
+
+           OPEN I-O FS-VEHICLES-FILE
+        
+           DELETE FS-VEHICLES-FILE
+               INVALID KEY DISPLAY 'Vehicle not found.'
+               NOT INVALID KEY DISPLAY 'Successfully removed'
+           END-DELETE
+      *     Pakibago nalang
+                           
+           CLOSE FS-VEHICLES-FILE
+           ACCEPT WS-BUFFER
            .
 
        SUCCESS-ADD-VEHICLE-MESSAGE.
@@ -296,30 +523,242 @@
            ACCEPT WS-BUFFER.
 
        ADD-SCHEDULE-PAGE. 
+           PERFORM UNTIL WS-SCHEDULE-MENU-CHOICE = '5'
            PERFORM CLEAR
            DISPLAY "***************************************************"
            DISPLAY "*               Add Schedule Page                 *"
            DISPLAY "***************************************************"
+
+           PERFORM TRAVERSAL-SCHEDULE
+
+           DISPLAY ' '
+           DISPLAY '1 - Add Schedule'
+           DISPLAY '2 - Update Schedule'
+           DISPLAY '3 - Cancel Schedule'
+           DISPLAY '4 - Remove Schedule'
+           DISPLAY '5 - back to schedule page'
+           DISPLAY ' '
+           DISPLAY 'Enter your choice : ' WITH NO ADVANCING
+           ACCEPT WS-SCHEDULE-MENU-CHOICE
+           DISPLAY ' '
+
+               EVALUATE WS-SCHEDULE-MENU-CHOICE
+                   WHEN '1'
+                       PERFORM ADD-SCHEDULE
+                   WHEN '2'
+                       
+                   WHEN '3'
+                       
+                   WHEN '4'
+
+                   WHEN '5'
+                       CONTINUE
+                   WHEN OTHER
+                       DISPLAY ' '
+                       DISPLAY 'Error : <Invalid Choice>'
+                       ACCEPT WS-BUFFER
+                       PERFORM ADD-SCHEDULE-PAGE
+               END-EVALUATE
+      
+           
+           END-PERFORM 
+           ACCEPT WS-BUFFER
+           .
+
+       ADD-SCHEDULE.
            PERFORM TRAVERSAL-ROUTE-RECORD
-           PERFORM TRAVERSAL-VEHICLE-RECORD
            DISPLAY " Enter Route ID: " WITH NO ADVANCING
            ACCEPT WS-FK-ROUTE-ID
-           DISPLAY " Enter Vehicle ID: " WITH NO ADVANCING
-           ACCEPT WS-FK-VEHICLE-ID
-
-           IF WS-FK-ROUTE-ID = FS-ROUTE-ID AND
-           WS-FK-VEHICLE-ID = FS-VEHICLE-ID
-               DISPLAY " Enter departure time: " WITH NO ADVANCING
-               ACCEPT WS-S-DEPARTURE-TIME
-               DISPLAY " Enter arrival time: " WITH NO ADVANCING
-               ACCEPT WS-S-ARRIVAL-TIME
-           ELSE
+           MOVE WS-FK-ROUTE-ID TO FS-ROUTE-ID
+           OPEN INPUT FS-ROUTES-FILE
+               READ FS-ROUTES-FILE
+               INVALID KEY 
                PERFORM INVALID-INPUT-MESSAGE
                PERFORM ADD-SCHEDULE-PAGE
-           END-IF
+               END-READ
+           CLOSE FS-ROUTES-FILE
 
+           PERFORM TRAVERSAL-VEHICLE-RECORD
+           DISPLAY " Enter Vehicle ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-VEHICLE-ID
+           MOVE WS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+           OPEN INPUT FS-VEHICLES-FILE
+               READ FS-VEHICLES-FILE
+               INVALID KEY 
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE-PAGE
+               END-READ
+           CLOSE FS-VEHICLES-FILE
+
+           MOVE 0 TO WS-BOOL
+
+           DISPLAY '[DEPARTURE TIME]'
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
+               ACCEPT WS-I-MONTH
+               DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
+               ACCEPT WS-I-DAY
+               DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
+               ACCEPT WS-I-YEAR
+
+               ACCEPT WS-DATE FROM DATE
+
+
+               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+                   DISPLAY 'Invalid Month'
+               ELSE
+                   MOVE WS-I-MONTH TO WS-MONTH-CHECKER
+                   EVALUATE TRUE
+                       WHEN WS-MONTHS-31
+                           MOVE 31 TO WS-LIMIT-DAYS
+                       WHEN WS-MONTHS-30
+                           MOVE 30 TO WS-LIMIT-DAYS
+                       WHEN OTHER
+                           MOVE 28 TO WS-LIMIT-DAYS
+                   END-EVALUATE
+                   IF WS-I-DAY < WS-DAY OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                       DISPLAY 'Invalid Day'
+                   ELSE
+                       IF WS-I-YEAR NOT = WS-YEAR
+                           DISPLAY 'Year'
+                       ELSE
+                           MOVE 1 TO WS-BOOL
+                           MOVE WS-DATE TO WS-DA-DATE
+                       END-IF
+                   END-IF
+               END-IF
+           END-PERFORM
+
+           MOVE 0 TO WS-BOOL
+
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
+               ACCEPT WS-I-HOUR
+               DISPLAY 'Enter Minute [MM]: ' WITH NO ADVANCING
+               ACCEPT WS-I-MINUTE
+
+               ACCEPT WS-TIME FROM TIME
+
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23 THEN
+                   DISPLAY 'Invalid Time: Hour'
+               ELSE 
+                   IF WS-I-MINUTE < 0 OR WS-I-MINUTE > 59 THEN
+                   DISPLAY 'Invalid Time: Minute'
+                   ELSE
+                       EVALUATE TRUE
+                           WHEN WS-HOUR = 0
+                               MOVE 12 TO WS-HOUR
+                               MOVE 'AM' TO WS-DA-TIME-FORMAT
+                           WHEN WS-HOUR < 12
+                               MOVE 'AM' TO WS-DA-TIME-FORMAT
+                           WHEN WS-HOUR = 12
+                               MOVE 'PM' TO WS-DA-TIME-FORMAT
+                           WHEN OTHER
+                               COMPUTE WS-HOUR = WS-HOUR - 12
+                               MOVE 'PM' TO WS-DA-TIME-FORMAT
+                       END-EVALUATE
+      
+                       DISPLAY WS-TIME
+      
+                       MOVE 1 TO WS-BOOL
+                       MOVE WS-I-HOUR TO WS-DA-HOUR
+                       MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                   END-IF
+               END-IF
+
+           END-PERFORM
+           
+           MOVE WS-TIME-STAMP-D-A TO WS-S-DEPARTURE-TIME
+
+           MOVE 0 TO WS-BOOL
+
+           DISPLAY '[ARRIVAL TIME]'
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
+               ACCEPT WS-I-MONTH
+               DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
+               ACCEPT WS-I-DAY
+               DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
+               ACCEPT WS-I-YEAR
+
+               ACCEPT WS-DATE FROM DATE
+
+               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+                   DISPLAY 'Invalid Month'
+               ELSE
+                   MOVE WS-I-MONTH TO WS-MONTH-CHECKER
+                   EVALUATE TRUE
+                       WHEN WS-MONTHS-31
+                           MOVE 31 TO WS-LIMIT-DAYS
+                       WHEN WS-MONTHS-30
+                           MOVE 30 TO WS-LIMIT-DAYS
+                       WHEN OTHER
+                           MOVE 28 TO WS-LIMIT-DAYS
+                   END-EVALUATE
+                   IF WS-I-DAY < WS-DAY OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                       DISPLAY 'Invalid Day'
+                   ELSE
+                       IF WS-I-YEAR NOT = WS-YEAR
+                           DISPLAY 'Year'
+                       ELSE
+                           MOVE 1 TO WS-BOOL
+                           MOVE WS-DATE TO WS-DA-DATE
+                       END-IF
+                   END-IF
+               END-IF
+           END-PERFORM
+
+           MOVE 0 TO WS-BOOL
+
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Hour [HH] : ' WITH NO ADVANCING
+               ACCEPT WS-I-HOUR
+               DISPLAY 'Enter Minute [MM] : ' WITH NO ADVANCING
+               ACCEPT WS-I-MINUTE
+
+               ACCEPT WS-TIME FROM TIME
+
+               EVALUATE TRUE 
+                   WHEN WS-HOUR = 0
+                       MOVE 12 TO WS-HOUR
+                   WHEN WS-HOUR < 12
+                       MOVE WS-HOUR TO WS-HOUR
+                   WHEN WS-HOUR = 12
+                       MOVE WS-HOUR TO WS-HOUR
+                   WHEN OTHER 
+                   COMPUTE WS-HOUR = WS-HOUR - 12
+               END-EVALUATE
+
+               EVALUATE TRUE
+                   WHEN WS-I-HOUR < WS-HOUR OR WS-I-HOUR > 12
+                       DISPLAY 'Invalid Time'
+                   WHEN WS-I-MINUTE < WS-MINUTE OR WS-I-MINUTE > 60 OR 
+                   WS-I-MINUTE <= 0
+                       DISPLAY 'Invalid Time'
+                   WHEN OTHER 
+                       MOVE 1 TO WS-BOOL
+                       MOVE WS-HOUR TO WS-DA-HOUR
+                       MOVE WS-MINUTE TO WS-DA-MINUTES
+               END-EVALUATE
+           END-PERFORM
+
+           MOVE WS-TIME-STAMP-D-A TO WS-S-ARRIVAL-TIME
+
+           DISPLAY WS-TIME-STAMP-D-A
+           DISPLAY WS-S-ARRIVAL-TIME
+
+           PERFORM RECORD-SCHEDULE
            PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
            .
+
+      *UPDATE-SCHEDULE.
+      *    .
+      *
+      *CANCEL-SCHEDULE.
+      *    .
+      *
+      *CANCEL-SCHEDULE.
+      *    .
 
        SUCCESS-ADD-SCHEDULE-MESSAGE.
            DISPLAY "***************************************************"
@@ -331,41 +770,93 @@
 
        TRAVERSAL-VEHICLE-RECORD.
            MOVE SPACES TO WS-EOF
+           MOVE 1 TO WS-COUNTER-I
            OPEN INPUT FS-VEHICLES-FILE
+           DISPLAY ' '
+           DISPLAY '   VEHICLE ID      | SERIAL | TYPE | CAPACITY |    '-
+           'LICENSE PLATE     | PRICE FACTOR |      CREATED      |'
+           DISPLAY '---------------------------------------------------'-
+           '---------------------------------------------------'
            PERFORM UNTIL WS-EOF = 'Y'    
                READ FS-VEHICLES-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END 
-               DISPLAY "VEHICLE ID: " FS-VEHICLE-ID 
-               DISPLAY "VEHICLE TYPE: " FS-VEHICLE-TYPE
-               DISPLAY "VEHICLE CAPACITY: " FS-VEHICLE-CAPACITY
-               DISPLAY "VEHICLE LICENSE PLATE: " 
-               FS-VEHICLE-LICENSE-PLATE
-               DISPLAY "VEHICLE PRICE FACTOR: " FS-VEHICLE-PRICE-FACTOR
-               DISPLAY "VEHICLE TIME STAMP: " FS-VEHICLE-TIME-STAMP
-               DISPLAY "-----------------------------------------------"
+               DISPLAY WS-COUNTER-I '. 'FS-VEHICLE-ID ' | ' 
+               FS-VEHICLE-SERIAL' | '
+               FS-VEHICLE-CLASS ' | ' FS-VEHICLE-CAPACITY ' | ' 
+               FS-VEHICLE-LICENSE-PLATE ' | ' FS-VEHICLE-PRICE-FACTOR 
+               ' | ' FS-VEHICLE-TIME-STAMP
+               DISPLAY '-----------------------------------------------'-
+               '-------------------------------------------------------'
                END-READ
+               ADD 1 TO WS-COUNTER-I
             END-PERFORM
            CLOSE FS-VEHICLES-FILE
            .
 
        TRAVERSAL-ROUTE-RECORD.
            MOVE SPACES TO WS-EOF
+           MOVE 1 TO WS-COUNTER-I
+           DISPLAY ' '
+           DISPLAY '       ROUTE ID     |             ORIGIN           '-
+           '  |          DESTINATION           |   DISTANCE   |  BASE P'-
+           'RICE  |      CREATED      |'
+           DISPLAY '---------------------------------------------------'-
+           '-----------------------------------------------------------'-
+           '---------------------------'
            OPEN INPUT FS-ROUTES-FILE 
            PERFORM UNTIL WS-EOF = 'Y'   
                READ FS-ROUTES-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END 
-               DISPLAY "ROUTE ID: " FS-ROUTE-ID 
-               DISPLAY "ROUTE ORIGIN: " FS-ROUTE-ORIGIN
-               DISPLAY "ROUTE DESTINATION: " FS-ROUTE-DESTINATION
-               DISPLAY "ROUTE DISTANCE: " FS-ROUTE-DISTANCE
-               DISPLAY "ROUTE BASE PRICE: " FS-ROUTE-BASE-PRICE
-               DISPLAY "ROUTE TIME STAMP: " FS-ROUTE-TIME-STAMP
-               DISPLAY "-----------------------------------------------"
+               DISPLAY WS-COUNTER-I '. ' FS-ROUTE-ID ' | ' 
+               FS-ROUTE-ORIGIN ' | ' 
+               FS-ROUTE-DESTINATION ' | ' FS-ROUTE-DISTANCE ' | '
+               FS-ROUTE-BASE-PRICE ' | ' FS-ROUTE-TIME-STAMP
+               DISPLAY '-----------------------------------------------'-
+               '-------------------------------------------------------'-
+               '-----------------------------------'
                END-READ
+               ADD 1 TO WS-COUNTER-I
             END-PERFORM
            CLOSE FS-ROUTES-FILE
+           .
+
+       TRAVERSAL-SCHEDULE.
+           MOVE SPACES TO WS-EOF
+           MOVE 1 TO WS-COUNTER-I
+           DISPLAY ' '
+           DISPLAY '                                 ROUTE             '-
+           '                  | VEHICLE SERIAL |   DEPARTURE TIME    | '-
+           '    ARRIVAL TIME    | STATUS |       CREATED       |'
+           DISPLAY '---------------------------------------------------'-
+           '-----------------------------------------------------------'-
+           '----------------------------------------------------'
+           OPEN INPUT FS-SCHEDULES-FILE
+           PERFORM UNTIL WS-EOF = 'Y'
+               READ FS-SCHEDULES-FILE NEXT RECORD
+               AT END MOVE 'Y' TO WS-EOF
+               NOT AT END
+               MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
+               MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+               OPEN INPUT FS-ROUTES-FILE
+                   READ FS-ROUTES-FILE
+                   END-READ
+               CLOSE FS-ROUTES-FILE
+               OPEN INPUT FS-VEHICLES-FILE
+                   READ FS-VEHICLES-FILE
+                   END-READ
+               CLOSE FS-VEHICLES-FILE
+               DISPLAY WS-COUNTER-I '. ' FS-ROUTE-ORIGIN ' TO ' 
+               FS-ROUTE-DESTINATION ' | ' FS-VEHICLE-SERIAL ' | ' 
+               FS-S-DEPARTURE-TIME ' | ' FS-S-ARRIVAL-TIME ' | ' 
+               FS-S-STATUS ' | ' FS-S-TIME-STAMP
+               DISPLAY '-----------------------------------------------'-
+               '-------------------------------------------------------'-
+               '-------------------------------------------------------'-
+               '-----'
+           END-PERFORM
+           CLOSE FS-SCHEDULES-FILE
            .
 
        RECORD-ROUTE.
@@ -544,8 +1035,8 @@
       *    Generates Time Stamp of Creation
            ACCEPT WS-TS-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
-           MOVE WS-TIME(1:2) TO WS-TS-HOUR
-           MOVE WS-TIME(3:2) TO WS-TS-MINUTES
-           MOVE WS-TIME(5:2) TO WS-TS-SECOND
+           MOVE WS-HOUR TO WS-TS-HOUR
+           MOVE WS-MINUTE TO WS-TS-MINUTES
+           MOVE WS-SECOND TO WS-TS-SECOND
            .
        

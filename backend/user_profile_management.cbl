@@ -287,6 +287,28 @@
 
 
            MOVE FUNCTION LOWER-CASE(WS-EMAIL) TO WS-EMAIL
+
+           IF WS-FIRST-NAME = SPACES OR WS-LAST-NAME = SPACES OR 
+           WS-PHONE-NUMBER = SPACES OR WS-EMAIL = SPACES THEN
+               DISPLAY 'Error : <Must Fill all the fields>'
+               DISPLAY ' '
+
+               DISPLAY'Do you want to sign up again? [YES/NO]: ' WITH NO 
+               ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM PASSENGER-SIGNUP-PAGE
+                   WHEN 'NO'
+                       PERFORM PASSENGER-MAIN-PAGE
+                   WHEN OTHER
+                       DISPLAY'Your choice is invalid'
+               END-EVALUATE
+           END-IF
            
            OPEN INPUT FS-PASSENGER-FILE
                READ FS-PASSENGER-FILE NEXT RECORD
@@ -365,10 +387,10 @@
                                     DISPLAY 'Invalid Input'
                             END-EVALUATE
                         END-PERFORM
-               END-IF
+                   END-IF
                ELSE
                    PERFORM INCORRECT-OTP-MESSAGE
-           END-IF
+               END-IF
                
            ELSE
                PERFORM FAILED-OTP-MESSAGE
@@ -424,6 +446,7 @@
                            IF FS-A-EMAIL = WS-EMAIL AND FS-A-PASSWORD 
                                = WS-HASHED-PASSWORD THEN    
                                MOVE 1 TO WS-BOOL
+                               MOVE 'Y' TO WS-EOF
                            END-IF
                            READ FS-ADMIN-FILE NEXT RECORD
                            AT END MOVE 'Y' TO WS-EOF
@@ -433,11 +456,19 @@
                
            CLOSE FS-PASSENGER-FILE
 
+           MOVE FS-A-USER-ID TO FS-CURRENT-USER
+
+           OPEN OUTPUT FS-CURRENT-USER-FILE
+               WRITE FS-CURRENT-USER
+               END-WRITE
+           CLOSE FS-CURRENT-USER-FILE
+
            IF WS-BOOL = 1 THEN
                PERFORM SUCCESS-LOGIN-MESSAGE
                PERFORM MAIN-PAGE
            ELSE 
                PERFORM INVALID-ACCOUNT-MESSAGE
+
                DISPLAY'Do you want to sign up again? [YES/NO]: ' WITH NO 
                ADVANCING
                ACCEPT WS-REENTER-CHOICE
@@ -489,10 +520,11 @@
                ELSE
                    PERFORM INCORRECT-OTP-MESSAGE
            END-IF    
-           MOVE 1 TO WS-BOOL
            
            PERFORM CLEAR
+
            IF WS-BOOL = 1 THEN
+               MOVE 1 TO WS-BOOL
                DISPLAY " Enter first name: " WITH NO ADVANCING
                ACCEPT WS-FIRST-NAME
                DISPLAY " Enter last name: " WITH NO ADVANCING
@@ -566,9 +598,8 @@
                        IF WS-PASSWORD = WS-CONFIRM-PASSWORD THEN
                            PERFORM SUCCESS-ACCOUNT-MESSAGE
                            PERFORM RECORD-ADMIN
-                           
                            PERFORM ADMIN-MAIN-PAGE
-                   ELSE
+                       ELSE
                        PERFORM INVALID-ACCOUNT-MESSAGE
                        DISPLAY'Do you want to sign up again? [YES/NO]: ' 
                        WITH NO ADVANCING
@@ -585,21 +616,13 @@
                            WHEN OTHER
                                DISPLAY'Your choice is invalid'
                            END-EVALUATE
-                   END-IF
+                       END-IF
                ELSE
                    PERFORM INCORRECT-OTP-MESSAGE
+               END-IF
+           ELSE
+               PERFORM FAILED-OTP-MESSAGE
            END-IF.
-
-      *INITIALIZE-RECORDS.
-      *    MOVE LS-FIRST-NAME TO WS-FIRST-NAME
-      *    MOVE LS-LAST-NAME TO WS-LAST-NAME
-      *    MOVE LS-EMAIL TO WS-EMAIL
-      *    PERFORM HASH-PASSWORD
-      *    MOVE WS-HASHED-PASSWORD TO WS-PASSWORD
-      *    MOVE WS-HASHED-PASSWORD TO LS-PASSWORD
-      *    MOVE LS-PHONE-NUMBER TO WS-PHONE-NUMBER
-      *    MOVE LS-ROLE TO WS-ROLE
-      *    .
        
        RECORD-ADMIN.
       *    Fetch Last Generated ID (Para sa incremententation)
