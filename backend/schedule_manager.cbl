@@ -816,8 +816,250 @@
            .
 
        UPDATE-SCHEDULE.
-           PERFORM CLEAR
+           DISPLAY '[UPDATE SCHEDULE]'
+           DISPLAY ' '
+           DISPLAY 'Search ID: ' WITH NO ADVANCING
+           ACCEPT FS-SCHEDULE-ID
+
+
+           OPEN I-O FS-SCHEDULES-FILE
+               READ FS-SCHEDULES-FILE
+               KEY IS FS-SCHEDULE-ID
+               INVALID KEY DISPLAY 'Schedule Record Not Found'
+               NOT INVALID KEY
+                   DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
+                   ACCEPT WS-I-MONTH
+                   DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
+                   ACCEPT WS-I-DAY
+                   DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
+                   ACCEPT WS-I-YEAR
+
+
+               ACCEPT WS-DATE FROM DATE
+
+
+
+
+               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+                   DISPLAY 'Invalid Month'
+               ELSE
+                   MOVE WS-I-MONTH TO WS-MONTH-CHECKER
+
+
+                   EVALUATE TRUE
+                       WHEN WS-MONTHS-31
+                           MOVE 31 TO WS-LIMIT-DAYS
+                       WHEN WS-MONTHS-30
+                           MOVE 30 TO WS-LIMIT-DAYS
+                       WHEN OTHER
+                           MOVE 28 TO WS-LIMIT-DAYS
+                   END-EVALUATE
+
+
+                   IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY < WS-DAY)
+                   OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                       DISPLAY 'Invalid Day'
+                   ELSE
+                       IF WS-I-YEAR NOT = WS-YEAR
+                           DISPLAY 'Year'
+                       ELSE
+                           MOVE WS-INPUT-DATE TO WS-DA-DATE
+                           DISPLAY WS-DA-DATE
+                            MOVE 1 TO WS-BOOL
+                       END-IF
+                   END-IF
+               END-IF
+
+
+           MOVE 0 TO WS-BOOL
+
+
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'TIME FORMAT'
+               DISPLAY '1 - Morning (AM)'
+               DISPLAY '2 - Evening / Afternoon (PM)'
+               DISPLAY ' '
+               DISPLAY 'Enter your choice : ' WITH NO ADVANCING
+               ACCEPT WS-TIME-FORMAT-CHOICE
+
+
+               EVALUATE WS-TIME-FORMAT-CHOICE
+                   WHEN '1'
+                       MOVE 'AM' TO WS-I-TIME-FORMAT
+                   WHEN '2'
+                       MOVE 'PM' TO WS-I-TIME-FORMAT
+               END-EVALUATE
+
+
+               DISPLAY ' '
+               DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
+               ACCEPT WS-I-HOUR
+               DISPLAY 'Enter Minute [MM]: ' WITH NO ADVANCING
+               ACCEPT WS-I-MINUTE
+
+
+               ACCEPT WS-TIME FROM TIME
+
+
+               EVALUATE TRUE
+                   WHEN WS-HOUR = 0
+                       MOVE 12 TO WS-HOUR
+                       MOVE 'AM' TO WS-TIME-FORMAT
+                   WHEN WS-HOUR < 12
+                       MOVE 'AM' TO WS-TIME-FORMAT
+                   WHEN WS-HOUR = 12
+                       MOVE 'PM' TO WS-TIME-FORMAT
+                   WHEN OTHER
+                       COMPUTE WS-HOUR = WS-HOUR - 12
+                       MOVE 'PM' TO WS-TIME-FORMAT
+               END-EVALUATE
+
+
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23 THEN
+                   DISPLAY 'Invalid Time: Hour'
+               ELSE
+                   IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
+                    WS-I-MINUTE > 59 THEN
+                   DISPLAY 'Invalid Time: Minute'
+                   ELSE
+                       MOVE WS-I-HOUR TO WS-DA-HOUR
+                       MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                       MOVE 1 TO WS-BOOL
+                   END-IF
+               END-IF
+
+
+           END-PERFORM
+           DISPLAY WS-TIME-STAMP-D-A
+           MOVE WS-TIME-STAMP-D-A TO WS-S-DEPARTURE-TIME
+
+
+           MOVE 0 TO WS-BOOL
+
+
+           DISPLAY '[ARRIVAL TIME]'
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
+               ACCEPT WS-I-MONTH
+               DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
+               ACCEPT WS-I-DAY
+               DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
+               ACCEPT WS-I-YEAR
+
+
+               ACCEPT WS-DATE FROM DATE
+
+
+
+
+               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+                   DISPLAY 'Invalid Month'
+               ELSE
+                   MOVE WS-I-MONTH TO WS-MONTH-CHECKER
+
+
+                   EVALUATE TRUE
+                       WHEN WS-MONTHS-31
+                           MOVE 31 TO WS-LIMIT-DAYS
+                       WHEN WS-MONTHS-30
+                           MOVE 30 TO WS-LIMIT-DAYS
+                       WHEN OTHER
+                           MOVE 28 TO WS-LIMIT-DAYS
+                   END-EVALUATE
+
+
+                   IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY < WS-DAY)
+                   OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                       DISPLAY 'Invalid Day'
+                   ELSE
+                       IF WS-I-YEAR NOT = WS-YEAR
+                           DISPLAY 'Year'
+                       ELSE
+                           MOVE WS-INPUT-DATE TO WS-DA-DATE
+                            MOVE 1 TO WS-BOOL
+                       END-IF
+                   END-IF
+               END-IF
+           END-PERFORM
+
+
+           MOVE 0 TO WS-BOOL
+
+
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'TIME FORMAT'
+               DISPLAY '1 - Morning (AM)'
+               DISPLAY '2 - Evening / Afternoon (PM)'
+               DISPLAY ' '
+               DISPLAY 'Enter your choice : ' WITH NO ADVANCING
+               ACCEPT WS-TIME-FORMAT-CHOICE
+     
+               EVALUATE WS-TIME-FORMAT-CHOICE
+                   WHEN '1'
+                       MOVE 'AM' TO WS-I-TIME-FORMAT
+                   WHEN '2'
+                       MOVE 'PM' TO WS-I-TIME-FORMAT
+               END-EVALUATE
+     
+               DISPLAY ' '
+               DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
+               ACCEPT WS-I-HOUR
+               DISPLAY 'Enter Minute [MM]: ' WITH NO ADVANCING
+               ACCEPT WS-I-MINUTE
+     
+               ACCEPT WS-TIME FROM TIME
+     
+               EVALUATE TRUE
+                   WHEN WS-HOUR = 0
+                       MOVE 12 TO WS-HOUR
+                       MOVE 'AM' TO WS-TIME-FORMAT
+                   WHEN WS-HOUR < 12
+                       MOVE 'AM' TO WS-TIME-FORMAT
+                   WHEN WS-HOUR = 12
+                       MOVE 'PM' TO WS-TIME-FORMAT
+                   WHEN OTHER
+                       COMPUTE WS-HOUR = WS-HOUR - 12
+                       MOVE 'PM' TO WS-TIME-FORMAT
+               END-EVALUATE
+     
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23  THEN
+                   DISPLAY 'Invalid Time: Hour'
+               ELSE
+                   IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
+                    WS-I-MINUTE > 59 THEN
+                   DISPLAY 'Invalid Time: Minute'
+                   ELSE
+                       MOVE WS-I-HOUR TO WS-DA-HOUR
+                       MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                       MOVE 1 TO WS-BOOL
+                   END-IF
+               END-IF
+     
+           END-PERFORM
+
+
+               IF WS-I-MONTH = SPACES OR WS-I-DAY = SPACES OR
+               WS-I-YEAR = SPACES OR WS-I-HOUR = SPACES OR
+               WS-I-MINUTE = SPACES
+                   DISPLAY 'Error : <Must fill all the fields>'
+                   PERFORM ADD-VEHICLE-PAGE
+               
+               ELSE
+                   MOVE WS-S-DEPARTURE-TIME TO FS-S-DEPARTURE-TIME
+                   MOVE WS-S-ARRIVAL-TIME TO FS-S-ARRIVAL-TIME
+                   REWRITE FS-SCHEDULES-RECORD
+                       INVALID KEY
+                               DISPLAY 'Error: Update Failed.'
+                            NOT INVALID KEY
+                                DISPLAY 'Update Successful.'
+                       END-REWRITE
+                   END-IF
+               END-READ
+           CLOSE FS-SCHEDULES-FILE
+           ACCEPT WS-BUFFER
            .
+
+
        
        CANCEL-SCHEDULE.
            PERFORM CLEAR
