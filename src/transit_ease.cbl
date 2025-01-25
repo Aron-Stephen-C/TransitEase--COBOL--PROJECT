@@ -9,8 +9,6 @@
        FILE SECTION.
 
        WORKING-STORAGE SECTION.
-       01  WS-RETURN-CODE    PIC 99.
-       01  WS-EXTRA-LINE    PIC X(50).
        01  WS-COMMAND PIC X(100).
 
        PROCEDURE DIVISION.
@@ -18,7 +16,7 @@
            PERFORM COMPILATION-MODULES
 
            CALL 'SYSTEM' USING 'backend/user_profile_management' 
-           RETURNING WS-RETURN-CODE
+           END-CALL
 
            STOP RUN.
 
