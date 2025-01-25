@@ -4,7 +4,7 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT FS-BOOKING-FILE ASSIGN TO 'data/booking.dat'
+           SELECT FS-BOOKING-FILE ASSIGN TO 'data/booking.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-BOOKING-ID

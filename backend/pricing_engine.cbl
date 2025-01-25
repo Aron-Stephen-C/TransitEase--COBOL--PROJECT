@@ -4,7 +4,7 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT FS-PAYMENT-FILE ASSIGN TO 'data/payments.dat'
+           SELECT FS-PAYMENT-FILE ASSIGN TO 'data/payments.txt'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS FS-PAYMENT-ID

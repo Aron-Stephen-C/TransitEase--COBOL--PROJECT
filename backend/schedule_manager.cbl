@@ -6,19 +6,19 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            
-           SELECT FS-ROUTES-FILE ASSIGN TO 'data/routes.dat'
+           SELECT FS-ROUTES-FILE ASSIGN TO 'data/routes.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-ROUTE-ID
                FILE STATUS IS WS-FILE-STATUS.
 
-           SELECT FS-VEHICLES-FILE ASSIGN TO 'data/vehicles.dat'
+           SELECT FS-VEHICLES-FILE ASSIGN TO 'data/vehicles.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-VEHICLE-ID
                FILE STATUS IS WS-FILE-STATUS.
 
-           SELECT FS-SCHEDULES-FILE ASSIGN TO 'data/shedules.dat'
+           SELECT FS-SCHEDULES-FILE ASSIGN TO 'data/schedules.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-SCHEDULE-ID
@@ -632,6 +632,13 @@
            MOVE 0 TO WS-BOOL
 
            PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'TIME FORMAT'
+               DISPLAY '1 - Morning (AM)'
+               DISPLAY '2 - Morning (PM)'
+
+      *        EVALUATE 
+
+               DISPLAY ''
                DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
                ACCEPT WS-I-HOUR
                DISPLAY 'Enter Minute [MM]: ' WITH NO ADVANCING

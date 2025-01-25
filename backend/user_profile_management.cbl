@@ -14,13 +14,13 @@
            FILE STATUS IS WS-FILE-STATUS.
 
 
-           SELECT FS-PASSENGER-FILE ASSIGN TO 'data/passenger_file.dat'
+           SELECT FS-PASSENGER-FILE ASSIGN TO 'data/passenger_file.txt'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS FS-P-USER-ID
            FILE STATUS IS WS-FILE-STATUS.
        
-           SELECT FS-ADMIN-FILE ASSIGN TO 'data/admin_file.dat'
+           SELECT FS-ADMIN-FILE ASSIGN TO 'data/admin_file.txt'
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS FS-A-USER-ID
