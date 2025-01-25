@@ -356,6 +356,8 @@
                        PERFORM ADD-ROUTE-PAGE
                    END-IF 
 
+                   MOVE WS-ROUTES-RECORD TO FS-ROUTES-RECORD
+
                    REWRITE FS-ROUTES-RECORD
                    END-REWRITE
                END-READ
@@ -486,6 +488,7 @@
                        DISPLAY 'Error : <Must fill all the fields>'
                        PERFORM ADD-VEHICLE-PAGE
                    ELSE
+                       MOVE WS-VEHICLES-RECORD TO FS-VEHICLES-RECORD
                        REWRITE FS-VEHICLES-RECORD
                        END-REWRITE
       *                pakibago nalang
