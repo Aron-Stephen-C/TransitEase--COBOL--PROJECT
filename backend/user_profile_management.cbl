@@ -8,7 +8,7 @@
        FILE-CONTROL.
 
            SELECT FS-CURRENT-USER-FILE ASSIGN 
-           TO 'data/artifact/current_user.dat'
+           TO 'data/artifact/current_user.txt'
            ORGANIZATION IS LINE SEQUENTIAL
            ACCESS IS SEQUENTIAL
            FILE STATUS IS WS-FILE-STATUS.
