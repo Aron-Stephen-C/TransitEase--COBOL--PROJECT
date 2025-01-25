@@ -276,6 +276,9 @@
            IF WS-BOOL = 1 THEN
                PERFORM CLEAR
                PERFORM SUCCESS-LOGIN-MESSAGE
+               CALL 'SYSTEM' USING 'backend/booking_engine'
+               END-CALL
+               PERFORM MAIN-PAGE
 
            ELSE 
                PERFORM CLEAR

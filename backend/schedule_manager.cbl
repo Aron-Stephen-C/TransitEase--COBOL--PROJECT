@@ -84,7 +84,7 @@
                    04    FS-S-A-MINUTES    PIC 99.
                03    FS-S-A-FILLER-SPACE-2    PIC X(3).
                03    FS-S-A-TIME-FORMAT    PIC XX.
-           02    FS-S-STATUS    PIC X(5).
+           02    FS-S-STATUS    PIC X(8).
            02    FS-S-TIME-STAMP.
                03    FS-S-DATE    PIC 99/99/99.
                03    FS-S-FILLER-SPACE    PIC X(3).
@@ -202,7 +202,7 @@
                    04    WS-S-A-MINUTES    PIC 99.
                03    WS-S-A-FILLER-SPACE-2    PIC X(3).
                03    WS-S-A-TIME-FORMAT    PIC XX.
-           02    WS-S-STATUS    PIC X(5).
+           02    WS-S-STATUS    PIC X(8).
            02    WS-S-TIME-STAMP.
                03    WS-S-DATE    PIC 99/99/99.
                03    WS-S-FILLER-SPACE    PIC X(3).
@@ -811,7 +811,7 @@
 
            MOVE WS-TIME-STAMP-D-A TO WS-S-ARRIVAL-TIME
 
-           MOVE 'sched' TO WS-S-STATUS
+           MOVE 'active' TO WS-S-STATUS
            PERFORM RECORD-SCHEDULE
            PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
            .
@@ -1145,20 +1145,18 @@
            '-----------------------------------------------------------'-
            '-------------'
            OPEN INPUT FS-SCHEDULES-FILE
+           OPEN INPUT FS-ROUTES-FILE
+           OPEN INPUT FS-VEHICLES-FILE
            PERFORM UNTIL WS-EOF = 'Y'
                READ FS-SCHEDULES-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END
                MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
                MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
-               OPEN INPUT FS-ROUTES-FILE
-                   READ FS-ROUTES-FILE
-                   END-READ
-               CLOSE FS-ROUTES-FILE
-               OPEN INPUT FS-VEHICLES-FILE
-                   READ FS-VEHICLES-FILE
-                   END-READ
-               CLOSE FS-VEHICLES-FILE
+               READ FS-ROUTES-FILE
+               END-READ
+               READ FS-VEHICLES-FILE
+               END-READ
                DISPLAY WS-COUNTER-I '. 'FS-SCHEDULE-ID ' | ' 
                FS-ROUTE-ORIGIN ' TO ' 
                FS-ROUTE-DESTINATION ' | ' FS-VEHICLE-SERIAL ' | ' 
@@ -1170,6 +1168,8 @@
                '-------------------------'
                ADD 1 TO WS-COUNTER-I
            END-PERFORM
+           CLOSE FS-VEHICLES-FILE
+           CLOSE FS-ROUTES-FILE
            CLOSE FS-SCHEDULES-FILE
            .
 
