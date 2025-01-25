@@ -67,22 +67,24 @@
            02    FS-FK-ROUTE-ID    PIC X(15).
            02    FS-FK-VEHICLE-ID    PIC X(15).
            02    FS-S-DEPARTURE-TIME.
-               03    FS-S-D-DATE    PIC 99/99/9999.
-               03    FS-S-D-FILLER-SPACE    PIC X(3).
+               03    FS-S-D-DATE    PIC 99/99/99.
+               03    FS-S-D-FILLER-SPACE-1    PIC X(3).
                03    FS-S-D-TIME.
                    04    FS-S-D-HOUR    PIC 99.
                    04    FS-S-D-COLON-1    PIC X.
                    04    FS-S-D-MINUTES    PIC 99.
+               03    FS-S-D-FILLER-SPACE-2    PIC X(3).
                03    FS-S-D-TIME-FORMAT    PIC XX.
            02    FS-S-ARRIVAL-TIME.
                03    FS-S-A-DATE    PIC 99/99/99.
-               03    FS-S-A-FILLER-SPACE    PIC X(3).
+               03    FS-S-A-FILLER-SPACE-1    PIC X(3).
                03    FS-S-A-TIME.
                    04    FS-S-A-HOUR    PIC 99.
                    04    FS-S-A-COLON-1    PIC X.
                    04    FS-S-A-MINUTES    PIC 99.
-                03    FS-S-A-TIME-FORMAT    PIC XX.
-           02    FS-S-STATUS    PIC X(3).
+               03    FS-S-A-FILLER-SPACE-2    PIC X(3).
+               03    FS-S-A-TIME-FORMAT    PIC XX.
+           02    FS-S-STATUS    PIC X(5).
            02    FS-S-TIME-STAMP.
                03    FS-S-DATE    PIC 99/99/99.
                03    FS-S-FILLER-SPACE    PIC X(3).
@@ -100,8 +102,8 @@
            02    WS-MONTH    PIC 99.
            02    WS-DAY    PIC 99.
        01  WS-INPUT-DATE.
-           02    WS-I-MONTH    PIC 99.
-           02    WS-I-DAY    PIC 99.
+           02    WS-I-MONTH    PIC 99/.
+           02    WS-I-DAY    PIC 99/.
            02    WS-I-YEAR    PIC 99.
        01  WS-MONTH-CHECKER PIC 99.
            88  WS-MONTHS-31    VALUE 1,3,5,7,8,10,12.
@@ -140,11 +142,12 @@
                03    WS-TS-SECOND    PIC 99.
        01  WS-TIME-STAMP-D-A.
            02    WS-DA-DATE    PIC 99/99/99.
-           02    WS-DA-FILLER-SPACE    PIC X(3) VALUE SPACES.
+           02    WS-DA-FILLER-SPACE-1    PIC X(3) VALUE SPACES.
            02    WS-DA-TIME.
                03    WS-DA-HOUR    PIC 99.
                03    WS-DA-COLON-1    PIC X VALUE ':'.
                03    WS-DA-MINUTES    PIC 99.
+           02    WS-DA-FILLER-SPACE-2    PIC X(3) VALUE SPACES.
            02    WS-DA-TIME-FORMAT     PIC XX.
        01  WS-ROUTES-RECORD.
            02    WS-ROUTE-ID    PIC X(15).
@@ -183,21 +186,23 @@
            02    WS-FK-VEHICLE-ID    PIC X(15).
            02    WS-S-DEPARTURE-TIME.
                03    WS-S-D-DATE    PIC 99/99/99.
-               03    WS-S-D-FILLER-SPACE    PIC X(3).
+               03    WS-S-D-FILLER-SPACE-1    PIC X(3) VALUE SPACES.
                03    WS-S-D-TIME.
                    04    WS-S-D-HOUR    PIC 99.
-                   04    WS-S-D-COLON-1    PIC X.
+                   04    WS-S-D-COLON-1    PIC X VALUE ':'.
                    04    WS-S-D-MINUTES    PIC 99.
-               03    WS-S-D-TIME-FORMAT     PIC XX.
+               03    WS-S-D-FILLER-SPACE-2    PIC X(3) VALUE SPACES.
+               03    WS-S-D-TIME-FORMAT    PIC XX.
            02    WS-S-ARRIVAL-TIME.
                03    WS-S-A-DATE    PIC 99/99/99.
-               03    WS-S-A-FILLER-SPACE    PIC X(3).
+               03    WS-S-A-FILLER-SPACE-1    PIC X(3).
                03    WS-S-A-TIME.
                    04    WS-S-A-HOUR    PIC 99.
                    04    WS-S-A-COLON-1    PIC X.
                    04    WS-S-A-MINUTES    PIC 99.
-               03    WS-S-A-TIME-FORMAT     PIC XX.
-           02    WS-S-STATUS    PIC X(3).
+               03    WS-S-A-FILLER-SPACE-2    PIC X(3).
+               03    WS-S-A-TIME-FORMAT    PIC XX.
+           02    WS-S-STATUS    PIC X(5).
            02    WS-S-TIME-STAMP.
                03    WS-S-DATE    PIC 99/99/99.
                03    WS-S-FILLER-SPACE    PIC X(3).
@@ -586,29 +591,29 @@
            .
 
        ADD-SCHEDULE.
-      *    PERFORM TRAVERSAL-ROUTE-RECORD
-      *    DISPLAY " Enter Route ID: " WITH NO ADVANCING
-      *    ACCEPT WS-FK-ROUTE-ID
-      *    MOVE WS-FK-ROUTE-ID TO FS-ROUTE-ID
-      *    OPEN INPUT FS-ROUTES-FILE
-      *        READ FS-ROUTES-FILE
-      *        INVALID KEY 
-      *        PERFORM INVALID-INPUT-MESSAGE
-      *        PERFORM ADD-SCHEDULE-PAGE
-      *        END-READ
-      *    CLOSE FS-ROUTES-FILE
-      *
-      *    PERFORM TRAVERSAL-VEHICLE-RECORD
-      *    DISPLAY " Enter Vehicle ID: " WITH NO ADVANCING
-      *    ACCEPT WS-FK-VEHICLE-ID
-      *    MOVE WS-FK-VEHICLE-ID TO FS-VEHICLE-ID
-      *    OPEN INPUT FS-VEHICLES-FILE
-      *        READ FS-VEHICLES-FILE
-      *        INVALID KEY 
-      *        PERFORM INVALID-INPUT-MESSAGE
-      *        PERFORM ADD-SCHEDULE-PAGE
-      *        END-READ
-      *    CLOSE FS-VEHICLES-FILE
+           PERFORM TRAVERSAL-ROUTE-RECORD
+           DISPLAY " Enter Route ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-ROUTE-ID
+           MOVE WS-FK-ROUTE-ID TO FS-ROUTE-ID
+           OPEN INPUT FS-ROUTES-FILE
+               READ FS-ROUTES-FILE
+               INVALID KEY 
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE-PAGE
+               END-READ
+           CLOSE FS-ROUTES-FILE
+       
+           PERFORM TRAVERSAL-VEHICLE-RECORD
+           DISPLAY " Enter Vehicle ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-VEHICLE-ID
+           MOVE WS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+           OPEN INPUT FS-VEHICLES-FILE
+               READ FS-VEHICLES-FILE
+               INVALID KEY 
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE-PAGE
+               END-READ
+           CLOSE FS-VEHICLES-FILE
 
            MOVE 0 TO WS-BOOL
 
@@ -646,7 +651,6 @@
                            DISPLAY 'Year'
                        ELSE
                            MOVE WS-INPUT-DATE TO WS-DA-DATE
-                           DISPLAY WS-DA-DATE
                             MOVE 1 TO WS-BOOL
                        END-IF
                    END-IF
@@ -691,7 +695,7 @@
                        MOVE 'PM' TO WS-TIME-FORMAT
                END-EVALUATE
 
-               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23 THEN
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 12 THEN
                    DISPLAY 'Invalid Time: Hour'
                ELSE 
                    IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
@@ -700,12 +704,13 @@
                    ELSE
                        MOVE WS-I-HOUR TO WS-DA-HOUR
                        MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                       MOVE WS-I-TIME-FORMAT TO WS-DA-TIME-FORMAT
                        MOVE 1 TO WS-BOOL
                    END-IF
                END-IF
 
            END-PERFORM
-           DISPLAY WS-TIME-STAMP-D-A
+
            MOVE WS-TIME-STAMP-D-A TO WS-S-DEPARTURE-TIME
 
            MOVE 0 TO WS-BOOL
@@ -720,7 +725,6 @@
                ACCEPT WS-I-YEAR
 
                ACCEPT WS-DATE FROM DATE
-
 
                IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
                    DISPLAY 'Invalid Month'
@@ -788,7 +792,7 @@
                        MOVE 'PM' TO WS-TIME-FORMAT
                END-EVALUATE
       
-               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23  THEN
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 12  THEN
                    DISPLAY 'Invalid Time: Hour'
                ELSE 
                    IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
@@ -797,13 +801,16 @@
                    ELSE
                        MOVE WS-I-HOUR TO WS-DA-HOUR
                        MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                       MOVE WS-I-TIME-FORMAT TO WS-DA-TIME-FORMAT
                        MOVE 1 TO WS-BOOL
                    END-IF
                END-IF
       
            END-PERFORM
+
            MOVE WS-TIME-STAMP-D-A TO WS-S-ARRIVAL-TIME
 
+           MOVE 'sched' TO WS-S-STATUS
            PERFORM RECORD-SCHEDULE
            PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
            .
@@ -886,12 +893,14 @@
            MOVE SPACES TO WS-EOF
            MOVE 1 TO WS-COUNTER-I
            DISPLAY ' '
-           DISPLAY '                                 ROUTE             '-
-           '                  | VEHICLE SERIAL |   DEPARTURE TIME    | '-
-           '    ARRIVAL TIME    | STATUS |       CREATED       |'
+           DISPLAY '        SCHEDULE ID   |                            '-
+           '  ROUTE                               | VEHICLE SERIAL |   '-
+           'DEPARTURE TIME    |     ARRIVAL TIME    | STATUS |       CR'-
+           'EATED       |'
            DISPLAY '---------------------------------------------------'-
            '-----------------------------------------------------------'-
-           '----------------------------------------------------'
+           '-----------------------------------------------------------'-
+           '-------------'
            OPEN INPUT FS-SCHEDULES-FILE
            PERFORM UNTIL WS-EOF = 'Y'
                READ FS-SCHEDULES-FILE NEXT RECORD
@@ -907,14 +916,16 @@
                    READ FS-VEHICLES-FILE
                    END-READ
                CLOSE FS-VEHICLES-FILE
-               DISPLAY WS-COUNTER-I '. ' FS-ROUTE-ORIGIN ' TO ' 
+               DISPLAY WS-COUNTER-I '. 'FS-SCHEDULE-ID ' | ' 
+               FS-ROUTE-ORIGIN ' TO ' 
                FS-ROUTE-DESTINATION ' | ' FS-VEHICLE-SERIAL ' | ' 
                FS-S-DEPARTURE-TIME ' | ' FS-S-ARRIVAL-TIME ' | ' 
                FS-S-STATUS ' | ' FS-S-TIME-STAMP
                DISPLAY '-----------------------------------------------'-
                '-------------------------------------------------------'-
                '-------------------------------------------------------'-
-               '-----'
+               '-------------------------'
+               ADD 1 TO WS-COUNTER-I
            END-PERFORM
            CLOSE FS-SCHEDULES-FILE
            .
