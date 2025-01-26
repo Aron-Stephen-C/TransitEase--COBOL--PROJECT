@@ -40,11 +40,61 @@
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-ROUTE-ID
                FILE STATUS IS WS-FILE-STATUS.
+
+           SELECT FS-PAYMENT-FILE ASSIGN TO 'data/payments.txt'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS FS-PAYMENT-ID
+               FILE STATUS IS WS-FILE-STATUS.
+           
+           SELECT FS-CURRENT-BOOKING-FILE ASSIGN 
+               TO 'data/artifact/current_booking.txt'
+               ORGANIZATION IS LINE SEQUENTIAL
+               ACCESS IS SEQUENTIAL.
        
        DATA DIVISION.
        FILE SECTION.
+       FD  FS-CURRENT-BOOKING-FILE.
+       01  FS-CURRENT-BOOKING-ID    PIC X(15).
+
        FD  FS-CURRENT-USER-FILE.
        01  FS-CURRENT-USER    PIC X(15).
+
+       FD  FS-BOOKING-FILE.
+       01  FS-BOOKING-RECORD.
+           02    FS-BOOKING-ID    PIC X(15).
+           02    FS-FK-USER-ID    PIC X(15).
+           02    FS-FK-SCHEDULE-ID    PIC X(15).
+           02    FS-SEAT-NUMBER    PIC 9(10).
+           02    FS-BOOKING-STATUS    PIC X(9).
+           02    FS-PRICE    PIC 9(10)V99.
+           02    FS-TIME-STAMP.
+               03    FS-TS-DATE    PIC 99/99/99.
+               03    FS-TS-FILLER-SPACE    PIC X(3).
+               03    FS-TS-TIME.
+                   04    FS-TS-HOUR    PIC 99.
+                   04    FS-TS-FILLER-COLON-1    PIC X.
+                   04    FS-TS-MINUTES    PIC 99.
+                   04    FS-TS-FILLER-COLON-2    PIC X.
+                   04    FS-TS-SECONDS    PIC 99.
+
+       FD  FS-PAYMENT-FILE.
+       01  FS-PAYMENT-RECORD.
+           02    FS-PAYMENT-ID    PIC X(15).
+           02    FS-FK-BOOKING-ID    PIC X(15).
+           02    FS-PAYMENT-METHOD    PIC X(11).
+           02    FS-PAYMENT-AMOUNT    PIC 9(10)V99.
+           02    FS-PAYMENT-STATUS    PIC X.
+           02    FS-TRANSACTION-TIME-STAMP.
+               03    FS-TT-DATE    PIC 99/99/99.
+               03    FS-TT-FILLER-SPACE    PIC X(3).
+               03    FS-TT-TIME.
+                   04    FS-TT-HOUR    PIC 99.
+                   04    FS-TT-FILLER-COLON-1    PIC X.
+                   04    FS-TT-MINUTES    PIC 99.
+                   04    FS-TT-FILLER-COLON-2    PIC X.
+                   04    FS-TT-SECONDS    PIC 99.
+
 
        FD  FS-PASSENGER-FILE.
        01  FS-PASSENGER-RECORD.
@@ -133,24 +183,6 @@
                    04    FS-V-MINUTES    PIC 99.
                    04    FS-V-COLON-2    PIC X.
                    04    FS-V-SECOND    PIC 99.
-
-       FD  FS-BOOKING-FILE.
-       01  FS-BOOKING-RECORD.
-           02    FS-BOOKING-ID    PIC X(15).
-           02    FS-FK-USER-ID    PIC X(15).
-           02    FS-FK-SCHEDULE-ID    PIC X(15).
-           02    FS-SEAT-NUMBER    PIC 9(10).
-           02    FS-BOOKING-STATUS    PIC X.
-           02    FS-PRICE    PIC 9(9)V99.
-           02    FS-TIME-STAMP.
-               03    FS-TS-DATE    PIC 99/99/99.
-               03    FS-TS-FILLER-SPACE    PIC X(3).
-               03    FS-TS-TIME.
-                   04    FS-TS-HOUR    PIC 99.
-                   04    FS-TS-FILLER-COLON-1    PIC X.
-                   04    FS-TS-MINUTES    PIC 99.
-                   04    FS-TS-FILLER-COLON-2    PIC X.
-                   04    FS-TS-SECONDS    PIC 99.
        
        WORKING-STORAGE SECTION.
        01  WS-DATE     PIC 9(6).
@@ -160,9 +192,9 @@
            02    WS-BOOKING-ID    PIC X(15).
            02    WS-FK-USER-ID    PIC X(15).
            02    WS-FK-SCHEDULE-ID    PIC X(15).
-           02    WS-SEAT-NUMBER    PIC 9(10).
-           02    WS-BOOKING-STATUS    PIC X.
-           02    WS-PRICE    PIC 9(9)V99.
+           02    WS-SEAT-NUMBER    PIC 9(10).    
+           02    WS-BOOKING-STATUS    PIC X(9).
+           02    WS-PRICE    PIC 9(10)V99.
            02    WS-BOOKING-TIME-STAMP.
                03    WS-B-TS-DATE    PIC 99/99/99.
                03    WS-B-TS-FILLER-SPACE    PIC X(3).
@@ -172,6 +204,21 @@
                    04    WS-B-TS-MINUTES    PIC 99.
                    04    WS-B-TS-FILLER-COLON-2    PIC X.
                    04    WS-B-TS-SECONDS    PIC 99.
+       01  WS-PAYMENT-RECORD.
+           02    WS-PAYMENT-ID    PIC X(15).
+           02    WS-FK-BOOKING-ID    PIC X(15).
+           02    WS-PAYMENT-METHOD    PIC X(11).
+           02    WS-PAYMENT-AMOUNT    PIC 9(10)V99.
+           02    WS-PAYMENT-STATUS    PIC X.
+           02    WS-TRANSACTION-TIME-STAMP.
+               03    WS-TT-DATE    PIC 99/99/99.
+               03    WS-TT-FILLER-SPACE    PIC X(3).
+               03    WS-TT-TIME.
+                   04    WS-TT-HOUR    PIC 99.
+                   04    WS-TT-FILLER-COLON-1    PIC X.
+                   04    WS-TT-MINUTES    PIC 99.
+                   04    WS-TT-FILLER-COLON-2    PIC X.
+                   04    WS-TT-SECONDS    PIC 99.
        01  WS-FILE-STATUS    PIC XX.
        01  WS-GENERATED-ID.
            02    WS-GSI-DATE    PIC X(6).
@@ -192,9 +239,11 @@
                03    WS-TS-FILLER-COLON-2    PIC X VALUE ':'.
                03    WS-TS-SECONDS    PIC 99.
        01  WS-SCHEDULE-TABLE    PIC X(15) OCCURS 100 TIMES.
+       01  WS-AVAILABLE-TABLE    PIC X(15) OCCURS 100 TIMES.
        01  WS-PASSENGER-PAGE-CHOICE    PIC X.
        01  WS-ADD-BOOKING-CHOICE    PIC X.
        01  WS-SCHEDULE-CHOICE    PIC X(3).
+       01  WS-SCHEDULE-CHOICE-INT    PIC 9(3).
        01  WS-SCHEDULE-COUNTER    PIC 9(3).
        01  WS-BUFFER    PIC X.
        01  WS-COUNTER-I    PIC 9(4).
@@ -202,12 +251,12 @@
            02    WS-ORIGIN-Q    PIC X(30).
            02    WS-DESTINATION-Q    PIC X(30).
            02    WS-DATE-D-Q.
-               03    WS-MONTH-D-Q    PIC 99.
-               03    WS-DAY-D-Q    PIC 99.
+               03    WS-MONTH-D-Q    PIC 99/.
+               03    WS-DAY-D-Q    PIC 99/.
                03    WS-YEAR-D-Q    PIC 99.
            02    WS-DATE-A-Q.
-               03    WS-MONTH-A-Q    PIC 99.
-               03    WS-DAY-A-Q    PIC 99.
+               03    WS-MONTH-A-Q    PIC 99/.
+               03    WS-DAY-A-Q    PIC 99/.
                03    WS-YEAR-A-Q    PIC 99.
            02    WS-TIME-D-Q.
                03    WS-HOUR-D-Q    PIC 99.
@@ -216,10 +265,14 @@
                03    WS-HOUR-A-Q    PIC 99.
                03    WS-MINUTES-A-Q    PIC 99.
            02    WS-VEHICLE-CLASS-Q    PIC X(11).
+       01  WS-PAYMENT-METHOD-CHOICE    PIC X.
+       01  WS-CREDIT-CARD-NUMBER    PIC X(16).
+       01  WS-CONFIRM-BOOKING    PIC X(3).
+       01  WS-VEHICLE-CLASS-CLEAN PIC X(11).
 
-       LINKAGE SECTION.
        
        PROCEDURE DIVISION.
+           PERFORM CHECK-FILE-STATUS
 
            PERFORM FETCH-USER
 
@@ -246,9 +299,11 @@
            PERFORM UNTIL WS-PASSENGER-PAGE-CHOICE = '3'
                PERFORM CLEAR
 
+               DISPLAY 'Welcome - ' FS-P-FIRST-NAME
+               DISPLAY ' '
+
                PERFORM TRAVERSAL-BOOKING
 
-               DISPLAY 'Welcome - ' FS-P-FIRST-NAME
                DISPLAY ' '
                DISPLAY '1 - Add Booking'
                DISPLAY '2 - Cancel Booking'
@@ -261,7 +316,7 @@
                    WHEN '1'
                        PERFORM ADD-BOOKING-PAGE
                    WHEN '2'
-
+                       PERFORM UPDATE-BOOKING
                    WHEN '3'
                        CONTINUE
                    WHEN OTHER
@@ -290,7 +345,7 @@
                    WHEN '1'
                        PERFORM SEE-AVAILABLE-SCHEDULES
                    WHEN '2'
-
+                       PERFORM SEARCH-SCHEDULE
                    WHEN '3'
                        CONTINUE
                    WHEN OTHER
@@ -301,8 +356,45 @@
            END-PERFORM
            .
 
+       UPDATE-BOOKING.
+           DISPLAY '[Cancelling 12 hours before the departure date will'-
+           ' be unrefundable]'
+           DISPLAY 'Search Booking ID : ' WITH NO ADVANCING
+           ACCEPT FS-BOOKING-ID
+
+           OPEN I-O FS-BOOKING-FILE
+           OPEN INPUT FS-SCHEDULES-FILE
+           OPEN I-O FS-VEHICLES-FILE
+               READ FS-BOOKING-FILE
+               KEY IS FS-BOOKING-ID
+               INVALID KEY DISPLAY 'Booking Not Found'
+               NOT INVALID KEY
+                   READ FS-SCHEDULES-FILE
+                   KEY IS FS-SCHEDULE-ID
+                   END-READ
+                   MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+                   READ FS-VEHICLES-FILE
+                   KEY IS FS-VEHICLE-ID
+                   END-READ
+                   MOVE 'canceled' TO FS-BOOKING-STATUS
+
+                   REWRITE FS-BOOKING-RECORD
+                   END-REWRITE
+
+                   ADD FS-SEAT-NUMBER TO FS-VEHICLE-CAPACITY
+
+                   REWRITE FS-VEHICLES-RECORD
+                   END-REWRITE
+               END-READ    
+           CLOSE FS-VEHICLES-FILE
+           CLOSE FS-SCHEDULES-FILE
+           CLOSE FS-BOOKING-FILE
+           ACCEPT WS-BUFFER
+           .
+
        SEE-AVAILABLE-SCHEDULES.
-           PERFORM UNTIL WS-SCHEDULE-CHOICE = 0
+           MOVE LOW-VALUES TO WS-SCHEDULE-CHOICE
+           PERFORM UNTIL WS-SCHEDULE-CHOICE = '0'
                PERFORM CLEAR
                
                PERFORM CLEAR-SCHEDULE-TABLE
@@ -313,16 +405,18 @@
                WITH NO ADVANCING
                ACCEPT WS-SCHEDULE-CHOICE
 
+               MOVE WS-SCHEDULE-CHOICE TO WS-SCHEDULE-CHOICE-INT
                EVALUATE TRUE
-                   WHEN WS-SCHEDULE-CHOICE > WS-SCHEDULE-COUNTER
+               
+                   WHEN WS-SCHEDULE-CHOICE-INT > WS-SCHEDULE-COUNTER
                        DISPLAY ' '
                        DISPLAY 'Out of range'
-                   WHEN WS-SCHEDULE-CHOICE IS NOT NUMERIC 
-                       DISPLAY ' '
-                       DISPLAY 'Invalid Choice'
+                   WHEN WS-SCHEDULE-CHOICE = '0'
+                       CONTINUE
                    WHEN OTHER 
-                       MOVE WS-SCHEDULE-TABLE(WS-SCHEDULE-CHOICE) TO
+                       MOVE WS-SCHEDULE-TABLE(WS-SCHEDULE-CHOICE-INT) TO
                        WS-FK-SCHEDULE-ID
+                       PERFORM SEAT-SELECTION
                END-EVALUATE
            END-PERFORM
            .
@@ -358,6 +452,10 @@
            WITH NO ADVANCING
            ACCEPT WS-VEHICLE-CLASS-Q
 
+           MOVE FUNCTION LOWER-CASE(WS-ORIGIN-Q) TO WS-ORIGIN-Q
+           MOVE FUNCTION LOWER-CASE(WS-DESTINATION-Q) TO 
+           WS-DESTINATION-Q
+
            MOVE FUNCTION LOWER-CASE(WS-VEHICLE-CLASS-Q)  
            TO WS-VEHICLE-CLASS-Q
 
@@ -373,27 +471,168 @@
                    DISPLAY 'Invalid Input'
            END-EVALUATE
 
-           PERFORM UNTIL WS-SCHEDULE-CHOICE = 0
+           MOVE LOW-VALUES TO WS-SCHEDULE-CHOICE
+
+           PERFORM UNTIL WS-SCHEDULE-CHOICE = '0'
                PERFORM CLEAR
                PERFORM CLEAR-SCHEDULE-TABLE
                PERFORM INITIALIZE-SCHEDULE-SEARCH
+
                PERFORM DISPLAY-SCHEDULE-TABLE
                
                DISPLAY 'Enter your choice [0 - to back] : ' 
                WITH NO ADVANCING
                ACCEPT WS-SCHEDULE-CHOICE
 
+               MOVE WS-SCHEDULE-CHOICE TO WS-SCHEDULE-CHOICE-INT
+
                EVALUATE TRUE
-                   WHEN WS-SCHEDULE-CHOICE > WS-SCHEDULE-COUNTER
+                   WHEN WS-SCHEDULE-CHOICE-INT > WS-SCHEDULE-COUNTER
                        DISPLAY ' '
                        DISPLAY 'Out of range'
-                   WHEN WS-SCHEDULE-CHOICE IS NOT NUMERIC 
-                       DISPLAY ' '
-                       DISPLAY 'Invalid Choice'
-                   WHEN OTHER 
-                       MOVE WS-SCHEDULE-TABLE(WS-SCHEDULE-CHOICE) TO
+                   WHEN WS-SCHEDULE-CHOICE = '0'
+                       CONTINUE
+                   WHEN OTHER
+                       PERFORM SEAT-SELECTION
+                       MOVE WS-SCHEDULE-TABLE(WS-SCHEDULE-CHOICE-INT) TO
                        WS-FK-SCHEDULE-ID
                END-EVALUATE
+           END-PERFORM
+           .
+       
+       SEAT-SELECTION.
+           PERFORM CLEAR
+           DISPLAY '[AVAILABLE SEATS]'
+           OPEN INPUT FS-SCHEDULES-FILE
+           OPEN I-O FS-VEHICLES-FILE
+           OPEN INPUT FS-ROUTES-FILE
+               MOVE WS-FK-SCHEDULE-ID TO FS-SCHEDULE-ID
+               READ FS-SCHEDULES-FILE
+               KEY IS FS-SCHEDULE-ID
+               END-READ
+               MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
+               MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+               READ FS-VEHICLES-FILE
+               KEY IS FS-VEHICLE-ID
+               END-READ
+               DISPLAY 'Vehicle Serial : ' FS-VEHICLE-SERIAL
+               DISPLAY 'Available Seats : ' FS-VEHICLE-CAPACITY
+
+               DISPLAY 'Seat number : ' WITH NO ADVANCING
+               ACCEPT WS-SEAT-NUMBER
+
+               PERFORM PAYMENT-SELECTION
+
+           CLOSE FS-VEHICLES-FILE
+           CLOSE FS-ROUTES-FILE
+           CLOSE FS-SCHEDULES-FILE
+           ACCEPT WS-BUFFER
+           .
+
+       PAYMENT-SELECTION.
+           PERFORM CLEAR
+           DISPLAY '[PAYMENT SECTION]'
+
+           PERFORM PRICING-ENGINE
+
+           DISPLAY 'Price : ' WS-PRICE
+           
+           DISPLAY 'Payment Method : 1 - Cash'
+           DISPLAY '                 2 - Online payment (Credit Card)'
+           DISPLAY ' '
+           DISPLAY 'Confirm payment method : ' WITH NO ADVANCING
+           ACCEPT WS-PAYMENT-METHOD-CHOICE
+
+           EVALUATE WS-PAYMENT-METHOD-CHOICE
+               WHEN '1'
+                   MOVE 'cash' TO WS-PAYMENT-METHOD
+                   MOVE 'reserved' TO WS-BOOKING-STATUS
+                   PERFORM BOOKING-CONFIRMATION
+               WHEN '2'
+                   DISPLAY 'Credit Card Number : ' WITH NO ADVANCING
+                   ACCEPT WS-CREDIT-CARD-NUMBER
+                   MOVE 'credit-card' TO WS-PAYMENT-METHOD
+                   MOVE 'paid' TO WS-BOOKING-STATUS
+                   PERFORM BOOKING-CONFIRMATION
+               WHEN OTHER
+                  DISPLAY 'Invalid Choice'
+           END-EVALUATE
+           .
+
+       PRICING-ENGINE.
+           MOVE ZEROES TO WS-PRICE
+
+           READ FS-ROUTES-FILE
+           KEY IS FS-ROUTE-ID
+           END-READ
+           READ FS-VEHICLES-FILE
+           KEY IS FS-VEHICLE-ID
+           END-READ
+
+           COMPUTE WS-PRICE = (FS-ROUTE-BASE-PRICE * 
+           FS-VEHICLE-PRICE-FACTOR) * WS-SEAT-NUMBER
+
+           MOVE WS-PRICE TO WS-PAYMENT-AMOUNT
+           .
+
+       BOOKING-CONFIRMATION.
+
+           DISPLAY 'Booking Summary : '
+           DISPLAY 'Booking User : ' FS-P-LAST-NAME, FS-P-FIRST-NAME
+           DISPLAY 'Travel : ' FS-ROUTE-ORIGIN ' TO ' 
+           FS-ROUTE-DESTINATION
+           DISPLAY 'Departure Date / Time : ' FS-S-DEPARTURE-TIME
+           DISPLAY 'Arrival Date / Time : ' FS-S-ARRIVAL-TIME
+           DISPLAY 'Vehicle Serial : ' FS-VEHICLE-SERIAL
+           DISPLAY 'Seat number : ' WS-SEAT-NUMBER
+           DISPLAY 'Booking Status : ' WS-BOOKING-STATUS
+           DISPLAY 'Payment Method : ' WS-PAYMENT-METHOD
+           DISPLAY 'Price : ' WS-PRICE
+
+           DISPLAY ' '
+           DISPLAY 'Do you confirm : [YES][NO] ' WITH NO ADVANCING
+           ACCEPT WS-CONFIRM-BOOKING
+
+           MOVE FUNCTION LOWER-CASE(WS-CONFIRM-BOOKING) TO 
+           WS-CONFIRM-BOOKING
+
+           EVALUATE WS-CONFIRM-BOOKING
+               WHEN 'yes'
+                   DISPLAY 'Succesful'
+                   SUBTRACT WS-SEAT-NUMBER FROM FS-VEHICLE-CAPACITY
+                   REWRITE FS-VEHICLES-RECORD
+                   END-REWRITE
+                   PERFORM RECORD-BOOKING
+                   MOVE FS-BOOKING-ID TO WS-FK-BOOKING-ID
+                   PERFORM RECORD-PAYMENT
+                   MOVE FS-BOOKING-ID TO FS-CURRENT-BOOKING-ID
+                   OPEN OUTPUT FS-CURRENT-BOOKING-FILE
+                       WRITE FS-CURRENT-BOOKING-ID
+                       END-WRITE
+                   CLOSE FS-CURRENT-BOOKING-FILE
+                   PERFORM TICKETING
+               WHEN 'no'
+                   DISPLAY ' '
+                   DISPLAY 'Discontinue booking'
+                   
+               WHEN OTHER
+                  DISPLAY ' '
+                  DISPLAY 'Invalid Choice'
+                  ACCEPT WS-BUFFER
+
+           END-EVALUATE
+           
+           ACCEPT WS-BUFFER
+           .
+
+       TICKETING.
+           CALL 'SYSTEM' USING 'backend/ticketing_module'
+           .    
+
+       CLEAR-SCHEDULE-TABLE.
+           PERFORM VARYING WS-COUNTER-I FROM 1 BY 1 UNTIL 
+           WS-COUNTER-I > 100
+               MOVE SPACES TO WS-SCHEDULE-TABLE(WS-COUNTER-I)
            END-PERFORM
            .
 
@@ -409,7 +648,7 @@
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END 
                    MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
-                   MOVE FS-FK-VEHICLE-ID TO FS-ROUTE-ID
+                   MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
                    READ FS-ROUTES-FILE
                    END-READ
                    READ FS-VEHICLES-FILE
@@ -419,23 +658,18 @@
                    FS-S-D-DATE AND WS-DATE-A-Q = FS-S-A-DATE AND
                    WS-HOUR-D-Q = FS-S-D-HOUR AND WS-HOUR-A-Q = 
                    FS-S-A-HOUR AND WS-MINUTES-D-Q = FS-S-D-MINUTES AND
-                   WS-MINUTES-A-Q = FS-S-A-MINUTES THEN
+                   WS-MINUTES-A-Q = FS-S-A-MINUTES AND FS-S-STATUS = 
+                   'active' THEN
                        MOVE FS-SCHEDULE-ID TO 
                        WS-SCHEDULE-TABLE(WS-COUNTER-I)
                        ADD 1 TO WS-SCHEDULE-COUNTER
                        ADD 1 TO WS-COUNTER-I
                    END-IF
            END-PERFORM
+           DISPLAY 'jaja'
            CLOSE FS-SCHEDULES-FILE
            CLOSE FS-VEHICLES-FILE
            CLOSE FS-ROUTES-FILE
-           .
-
-       CLEAR-SCHEDULE-TABLE.
-           PERFORM VARYING WS-COUNTER-I FROM 1 BY 1 UNTIL 
-           WS-COUNTER-I > 100
-               MOVE SPACES TO WS-SCHEDULE-TABLE(WS-COUNTER-I)
-           END-PERFORM
            .
 
        INITILIAZE-SCHEDULE-TABLE.
@@ -464,8 +698,8 @@
            DISPLAY ' '
            DISPLAY '        SCHEDULE ID   |                            '-
            '  ROUTE                               | VEHICLE SERIAL |   '-
-           'DEPARTURE TIME    |     ARRIVAL TIME    | STATUS |       CR'-
-           'EATED       |'
+           ' CLASS |    '
+           'DEPARTURE TIME    |     ARRIVAL TIME    | STATUS '
            DISPLAY '---------------------------------------------------'-
            '-----------------------------------------------------------'-
            '-----------------------------------------------------------'-
@@ -484,11 +718,23 @@
                READ FS-ROUTES-FILE
                KEY IS FS-ROUTE-ID
                END-READ
+               EVALUATE FS-VEHICLE-CLASS
+                   WHEN 's'
+                       MOVE 'standard' TO WS-VEHICLE-CLASS-CLEAN
+                   WHEN 'd'
+                       MOVE 'deluxe' TO WS-VEHICLE-CLASS-CLEAN
+                   WHEN 'f'
+                       MOVE 'first-class' TO WS-VEHICLE-CLASS-CLEAN
+                   WHEN OTHER
+                      CONTINUE
+               END-EVALUATE
+               
                DISPLAY WS-COUNTER-I '. 'FS-SCHEDULE-ID ' | ' 
                FS-ROUTE-ORIGIN ' TO ' 
                FS-ROUTE-DESTINATION ' | ' FS-VEHICLE-SERIAL ' | ' 
+               WS-VEHICLE-CLASS-CLEAN ' | '
                FS-S-DEPARTURE-TIME ' | ' FS-S-ARRIVAL-TIME ' | ' 
-               FS-S-STATUS ' | ' FS-S-TIME-STAMP
+               FS-S-STATUS 
                DISPLAY '-----------------------------------------------'-
                '-------------------------------------------------------'-
                '-------------------------------------------------------'-
@@ -505,8 +751,8 @@
            MOVE 1 TO WS-COUNTER-I
            DISPLAY ' M Y  B O O K I N G S'
            DISPLAY ' '
-           DISPLAY 'BOOKING ID | ORIGIN - DESTINATION | VEHICLE SERIAL '-
-           '| SEAT | PAID | STATUS |'
+           DISPLAY 'BOOKING ID | ORIGIN - DESTINATION |  TRAVEL DATE / '-
+           'TIME | VEHICLE SERIAL | SEAT | PAID | STATUS |'
            DISPLAY '---------------------------------------------------'-
            '-----------------------------------------------------------'
            DISPLAY ' '
@@ -515,34 +761,32 @@
            OPEN INPUT FS-VEHICLES-FILE
            OPEN INPUT FS-ROUTES-FILE
                PERFORM UNTIL WS-EOF = 'Y'
-                   READ FS-SCHEDULES-FILE
-                   KEY IS FS-SCHEDULE-ID
-                   END-READ
-                   MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
-                   MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
-                   READ FS-VEHICLES-FILE
-                   KEY IS FS-VEHICLE-ID
-                   END-READ
-                   READ FS-ROUTES-FILE
-                   KEY IS FS-ROUTE-ID
-                   END-READ
                    READ FS-BOOKING-FILE NEXT RECORD
                    AT END MOVE 'Y' TO WS-EOF
                    NOT AT END
+                       MOVE FS-FK-SCHEDULE-ID TO FS-SCHEDULE-ID
+                        READ FS-SCHEDULES-FILE
+                       KEY IS FS-SCHEDULE-ID
+                       END-READ
+                       MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+                       MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
+                       READ FS-VEHICLES-FILE
+                       KEY IS FS-VEHICLE-ID
+                       END-READ
+                       READ FS-ROUTES-FILE
+                       KEY IS FS-ROUTE-ID
+                       END-READ
                        DISPLAY FS-BOOKING-ID ' ' FS-ROUTE-ORIGIN ' TO '
-                        FS-ROUTE-DESTINATION ' ' FS-VEHICLE-SERIAL ' ' 
-                        FS-SEAT-NUMBER ' ' FS-PRICE ' ' 
+                        FS-ROUTE-DESTINATION ' ' FS-S-DEPARTURE-TIME 
+                        ' TO ' FS-S-ARRIVAL-TIME '  ' FS-VEHICLE-SERIAL 
+                        ' ' FS-SEAT-NUMBER ' ' FS-PRICE ' ' 
                         FS-BOOKING-STATUS 
                    END-READ
-                   ADD 1 TO WS-COUNTER-I
                END-PERFORM
            CLOSE FS-ROUTES-FILE
            CLOSE FS-VEHICLES-FILE
            CLOSE FS-SCHEDULES-FILE
            CLOSE FS-BOOKING-FILE
-           .
-
-       UPDATE-SCHEDULE.
            .
 
        RECORD-BOOKING.
@@ -588,6 +832,47 @@
            CLOSE FS-BOOKING-FILE
            .
 
+       RECORD-PAYMENT.
+           MOVE SPACES TO WS-EOF
+           MOVE ZEROES TO WS-INCREMENT-VALUE
+           MOVE LOW-VALUE TO FS-PAYMENT-ID
+           OPEN I-O FS-PAYMENT-FILE
+               START FS-PAYMENT-FILE KEY IS GREATER THAN FS-PAYMENT-ID
+               READ FS-PAYMENT-FILE NEXT RECORD
+                   AT END MOVE 1 TO WS-INCREMENT-VALUE
+                   NOT AT END
+                       MOVE FS-PAYMENT-ID TO WS-LAST-GENERATED-ID
+                       PERFORM UNTIL WS-EOF = 'Y'
+                       READ FS-PAYMENT-FILE NEXT RECORD
+                           AT END MOVE 'Y' TO WS-EOF
+                           NOT AT END
+                               CONTINUE
+                       END-READ
+                       END-PERFORM
+               END-READ
+
+               IF WS-LAST-GENERATED-ID NOT = SPACES THEN
+                   MOVE WS-LSI-INCREMENT-VALUE TO WS-INCREMENT-VALUE
+                   ADD 1 TO WS-INCREMENT-VALUE
+               ELSE
+                   MOVE 1 TO WS-INCREMENT-VALUE
+               END-IF
+
+               PERFORM GENERATE-ID-SEQUENCE
+
+               MOVE WS-GENERATED-ID TO WS-PAYMENT-ID
+
+               PERFORM GENERATE-TIME-STAMP
+
+               MOVE WS-TIME-STAMP TO WS-TRANSACTION-TIME-STAMP
+
+               MOVE WS-PAYMENT-RECORD TO FS-PAYMENT-RECORD
+
+               WRITE FS-PAYMENT-RECORD
+               END-WRITE
+           CLOSE FS-PAYMENT-FILE
+           .
+
        GENERATE-ID-SEQUENCE.
            ACCEPT WS-GSI-DATE FROM DATE
            ACCEPT WS-TIME FROM TIME
@@ -610,6 +895,14 @@
                END-IF
            END-IF
            CLOSE FS-BOOKING-FILE
+           OPEN I-O FS-PAYMENT-FILE
+               IF WS-FILE-STATUS NOT = '00' THEN    
+                   OPEN OUTPUT FS-PAYMENT-FILE
+                   IF WS-FILE-STATUS NOT = '00' THEN    
+                       DISPLAY 'Error : <Unable to open file>'
+                   END-IF
+               END-IF
+           CLOSE FS-PAYMENT-FILE
            .
 
        CLEAR.

@@ -277,6 +277,7 @@
 
        ADD-ROUTE-PAGE.
            MOVE SPACES TO WS-ROUTES-RECORD
+           MOVE SPACES TO WS-ROUTE-MENU-CHOICE
            PERFORM UNTIL WS-ROUTE-MENU-CHOICE = '4'
            PERFORM CLEAR
            DISPLAY "***************************************************"
@@ -324,6 +325,8 @@
            ACCEPT WS-ROUTE-DISTANCE
            DISPLAY " Enter Route Base Price: " WITH NO ADVANCING
            ACCEPT WS-ROUTE-BASE-PRICE
+
+           
 
            IF WS-ROUTE-ORIGIN = SPACES OR WS-ROUTE-DESTINATION = SPACES
            OR WS-ROUTE-DISTANCE = ZEROES OR WS-ROUTE-BASE-PRICE = ZEROES

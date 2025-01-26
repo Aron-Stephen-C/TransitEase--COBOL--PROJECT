@@ -54,17 +54,6 @@
 
            MOVE SPACES TO WS-COMMAND
 
-           STRING 'cobc -x backend/pricing_engine.cbl '
-           DELIMITED BY SIZE
-           '-o backend/pricing_engine' DELIMITED BY SIZE 
-           INTO WS-COMMAND
-           END-STRING
-
-           CALL 'SYSTEM' USING WS-COMMAND
-           END-CALL
-
-           MOVE SPACES TO WS-COMMAND
-
            STRING 'cobc -x backend/ticketing_module.cbl '
            DELIMITED BY SIZE
            '-o backend/ticketing_module' DELIMITED BY SIZE 
