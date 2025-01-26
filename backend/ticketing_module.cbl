@@ -1,7 +1,6 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. ticketing_module.
 
-
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
@@ -12,13 +11,11 @@
                RECORD KEY IS FS-P-USER-ID
                FILE STATUS IS WS-FILE-STATUS.
 
-
            SELECT FS-ROUTES-FILE ASSIGN TO 'data/routes.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-ROUTE-ID
                FILE STATUS IS WS-FILE-STATUS.
-
 
            SELECT FS-VEHICLES-FILE ASSIGN TO 'data/vehicles.txt'
                ORGANIZATION IS INDEXED
@@ -32,22 +29,20 @@
                RECORD KEY IS FS-SCHEDULE-ID
                FILE STATUS IS WS-FILE-STATUS.
 
-
            SELECT FS-BOOKING-FILE ASSIGN TO 'data/booking.txt'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS FS-BOOKING-ID
                FILE STATUS IS WS-STATUS.
-           
-           SELECT FS-TICKET-FILE ASSIGN TO 'data/ticket.txt'
-             ORGANIZATION IS LINE SEQUENTIAL
-             FILE STATUS IS WS-TICKET-STATUS.
 
            SELECT FS-CURRENT-BOOKING-FILE ASSIGN 
                TO 'data/artifact/current_booking.txt'
                ORGANIZATION IS LINE SEQUENTIAL
                ACCESS IS SEQUENTIAL.
 
+           SELECT FS-OUTPUT-FILE ASSIGN TO 'data/booking_details.txt'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS WS-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -160,92 +155,33 @@
                    04    FS-V-MINUTES    PIC 99.
                    04    FS-V-COLON-2    PIC X.
                    04    FS-V-SECOND    PIC 99.
-       
-       FD  FS-TICKET-FILE.
-       01  FS-TICKET-RECORD                PIC X(100).
 
+       FD  FS-OUTPUT-FILE.
+       01  FS-OUTPUT-RECORD       PIC X(100).
 
        WORKING-STORAGE SECTION.
-       01  WS-USER-RECORD.
-           02    WS-USER-ID                PIC X(15).
-           02    WS-FIRST-NAME             PIC X(50).
-           02    WS-LAST-NAME              PIC X(50).
-           02    WS-EMAIL                  PIC X(100).
-       
-       
-       01  WS-ROUTES-RECORD.
-           02    WS-ROUTE-ID               PIC X(15).
-           02    WS-ROUTE-ORIGIN           PIC X(30).
-           02    WS-ROUTE-DESTINATION      PIC X(30).
-       
-       
-       01  WS-SCHEDULES-RECORD.
-           02    WS-SCHEDULE-ID            PIC X(15).
-           02    WS-S-DEPARTURE-TIME.
-               03    WS-S-D-DATE           PIC 99/99/99.
-               03    WS-S-D-FILLER-SPACE-1 PIC X(3) VALUE SPACES.
-               03    WS-S-D-TIME.
-                   04    WS-S-D-HOUR       PIC 99.
-                   04    WS-S-D-COLON-1    PIC X VALUE ':'.
-                   04    WS-S-D-MINUTES    PIC 99.
-               03    WS-S-D-FILLER-SPACE-2 PIC X(3) VALUE SPACES.
-               03    WS-S-D-TIME-FORMAT    PIC XX.
-       
-       
-           02    WS-S-ARRIVAL-TIME.
-               03    WS-S-A-DATE           PIC 99/99/99.
-               03    WS-S-A-FILLER-SPACE-1 PIC X(3) VALUE SPACES.
-               03    WS-S-A-TIME.
-                   04    WS-S-A-HOUR       PIC 99.
-                   04    WS-S-A-COLON-1    PIC X VALUE ':'.
-                   04    WS-S-A-MINUTES    PIC 99.
-               03    WS-S-A-FILLER-SPACE-2 PIC X(3) VALUE SPACES.
-               03    WS-S-A-TIME-FORMAT    PIC XX.
-       
-       
-       01  WS-BOOKING-RECORD.
-           02    WS-BOOKING-ID             PIC X(15).
-           02    WS-SEAT-NUMBER            PIC 9(10).
-           02    WS-PRICE                  PIC 9(9)V99.
-
-
        01  WS-STATUS                       PIC XX.
        01  WS-FILE-STATUS                  PIC XX.
        01  WS-TICKET-STATUS                PIC XX.
        01  WS-LINE                         PIC X(100).
+       01  WS-COMMAND                      PIC X(255).
 
 
        PROCEDURE DIVISION.
-
-      *    OPEN I-O FS-BOOKING-FILE
-      *    IF WS-STATUS NOT = '00'
-      *        PERFORM ERROR-OPENING-MESSAGE
-      *        STOP RUN
-      *    END-IF
-      *
-      *
-      *    OPEN OUTPUT FS-TICKET-FILE
-      *    IF WS-TICKET-STATUS NOT = '00'
-      *        PERFORM ERROR-OPENING-MESSAGE
-      *        STOP RUN
-      *    END-IF
-      *
-      *
-      *    PERFORM READ-AND-GENERATE-TICKET
-      *
-      *
-      *    CLOSE FS-BOOKING-FILE
-      *    CLOSE FS-TICKET-FILE
-      *
-      *
-      *    PERFORM SUCCESS-TICKET-MESSAGE
-      *    
-      *    CALL 'system' USING 'python3 txt_to_pdf_and_email.py '
-      *    WS-EMAIL
-
+           
            PERFORM FETCH-BOOKING-FILE
-      *    PERFORM DISPLAY-BOOKING-INFORMATION
-
+           PERFORM DISPLAY-BOOKING-INFORMATION
+           PERFORM WRITE-BOOKING-INFORMATION
+           
+           DISPLAY " "
+           PERFORM SUCCESS-TICKET-MESSAGE
+       
+           STRING 'python3 backend/txt_to_pdf_and_email.py 'FS-P-EMAIL
+           DELIMITED BY SIZE 
+           INTO WS-COMMAND
+           END-STRING
+           CALL 'SYSTEM' USING WS-COMMAND
+           END-CALL
 
            STOP RUN.
 
@@ -279,7 +215,7 @@
                MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
                MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
 
-               READ FS-ROUTES-FILE 
+               READ FS-ROUTES-FILE
                KEY IS FS-ROUTE-ID
                END-READ
 
@@ -296,113 +232,120 @@
            .
 
        DISPLAY-BOOKING-INFORMATION.
-           DISPLAY FS-BOOKING-ID
-           DISPLAY FS-P-FIRST-NAME
-           DISPLAY FS-P-LAST-NAME
-           DISPLAY FS-ROUTE-ORIGIN
-           DISPLAY FS-ROUTE-DESTINATION
-           DISPLAY FS-S-DEPARTURE-TIME
-           DISPLAY FS-S-ARRIVAL-TIME
-           DISPLAY FS-SEAT-NUMBER
-           DISPLAY FS-PRICE
-       .
+           DISPLAY "---------------------------------------------------"
+           DISPLAY "                 GENERATED TICKET                  "
+           DISPLAY "---------------------------------------------------"
+           DISPLAY " Booking ID: " FS-BOOKING-ID
+           DISPLAY "---------------------------------------------------"
+           DISPLAY " "
+           DISPLAY " I. User Information"
+           DISPLAY "      First Name:        " FS-P-FIRST-NAME
+           DISPLAY "      Last Name:         " FS-P-LAST-NAME
+           DISPLAY " "
+           DISPLAY " II. Travel Information"
+           DISPLAY "      Origin:            " FS-ROUTE-ORIGIN
+           DISPLAY "      Destination:       " FS-ROUTE-DESTINATION
+           DISPLAY "      Departure Time:    " FS-S-DEPARTURE-TIME
+           DISPLAY "      Arrival Time:      " FS-S-ARRIVAL-TIME
+           DISPLAY "      Seat Number:       " FS-SEAT-NUMBER
+           DISPLAY "      Ticket Price:      Php " FS-PRICE
+           DISPLAY " "
+           DISPLAY "----------------@TransitEase2025-------------------"
+           .
+
+       WRITE-BOOKING-INFORMATION.
+           OPEN OUTPUT FS-OUTPUT-FILE
+                   IF WS-FILE-STATUS NOT = '00'
+                        DISPLAY "Error opening output file."
+                        STOP RUN
+                   END-IF
+           
+           MOVE "---------------------------------------------------" 
+           TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
        
-      *READ-AND-GENERATE-TICKET.
-      *    READ FS-BOOKING-FILE
-      *        AT END
-      *            PERFORM NO-BOOKING-MESSAGE
-      *            STOP RUN
-      *        NOT AT END
-      *            PERFORM WRITE-TICKET
-      *    END-READ
-      *    .
-      *
-      *
-      *WRITE-TICKET.
-      *    MOVE "------------------------------------------------------"
-      *    TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "                  GENERATED TICKET                    "
-      *    TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "------------------------------------------------------"
-      *    TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "I. User Information" TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "User ID          : " FS-P-USER-ID
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *    
-      *    STRING "First Name       : " FS-P-FIRST-NAME
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Last Name        : " FS-P-LAST-NAME
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "------------------------------------------------------"
-      *    TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "II. Travel Information" TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Route ID         : " FS-ROUTE-ID
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *    
-      *    STRING "Origin           : " FS-ROUTE-ORIGIN
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Destination      : " FS-ROUTE-DESTINATION
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Departure Time   : " FS-S-DEPARTURE-TIME
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Arrival Time     : " FS-S-ARRIVAL-TIME
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Seat Number      : " FS-SEAT-NUMBER
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    STRING "Price            : Php" FS-PRICE
-      *    DELIMITED BY SIZE INTO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    MOVE "------------------@TransitEase2025--------------------"
-      *    TO WS-LINE
-      *    WRITE FS-TICKET-RECORD FROM WS-LINE
-      *
-      *
-      *    .
-      *
-      *
+           MOVE "                 GENERATED TICKET                  " 
+           TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE "---------------------------------------------------" 
+           TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+       
+           STRING "Booking ID: " FS-BOOKING-ID DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE "---------------------------------------------------" 
+           TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE " " TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE "I. User Information" TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "First Name: " FS-P-FIRST-NAME DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "Last Name: " FS-P-LAST-NAME DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE " " TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+       
+           MOVE "II. Travel Information" TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "Origin: " FS-ROUTE-ORIGIN DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "Destination: " FS-ROUTE-DESTINATION DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+       
+           STRING "Departure Time: " FS-S-DEPARTURE-TIME 
+           DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "Arrival Time: " FS-S-ARRIVAL-TIME 
+           DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+       
+           STRING "Seat Number: " FS-SEAT-NUMBER 
+           DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+
+           STRING "Ticket Price: " FS-PRICE 
+           DELIMITED BY SIZE 
+           INTO FS-OUTPUT-RECORD
+           END-STRING
+           WRITE FS-OUTPUT-RECORD.
+           
+           MOVE " " TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+           
+           MOVE "----------------@TransitEase2025-------------------" 
+           TO FS-OUTPUT-RECORD
+           WRITE FS-OUTPUT-RECORD.
+           
+           CLOSE FS-OUTPUT-FILE.
+
       *ERROR-OPENING-MESSAGE.
       *    DISPLAY "***************************************************"
       *    DISPLAY "*         Error opening file. Try Again!          *"
@@ -410,15 +353,13 @@
       *    DISPLAY " Press 'enter' key to continue..."
       *    .
       *
-      *
-      *SUCCESS-TICKET-MESSAGE.
-      *    DISPLAY "***************************************************"
-      *    DISPLAY "*          Ticket generation completed!           *"
-      *    DISPLAY "***************************************************"
-      *    DISPLAY " Press 'enter' key to continue..."
-      *    .
-      *
-      *
+       SUCCESS-TICKET-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*          Ticket generation completed!           *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+           .
+       
       *NO-BOOKING-MESSAGE.
       *    DISPLAY "***************************************************"
       *    DISPLAY "*       No booking records found. Try Again!      *"

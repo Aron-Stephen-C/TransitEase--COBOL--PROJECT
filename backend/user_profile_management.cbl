@@ -699,15 +699,6 @@
                DISPLAY " Enter OTP: " WITH NO ADVANCING
                ACCEPT WS-OTP
 
-               DISPLAY "Stored OTP: " FS-OTP
-               DISPLAY "Entered OTP: " WS-OTP
-               IF WS-OTP = FS-OTP
-                   DISPLAY "OTP matches"
-               ELSE
-                   DISPLAY "OTP mismatch"
-               END-IF
-
-
                IF WS-OTP = FS-OTP
                    PERFORM CLEAR
                    PERFORM CORRECT-OTP-MESSAGE

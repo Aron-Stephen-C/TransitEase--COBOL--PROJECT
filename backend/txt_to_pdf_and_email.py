@@ -1,64 +1,79 @@
+import os
+from fpdf import FPDF
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import pickle
-from fpdf import FPDF
+import sys
 
-def txt_to_pdf(txt_file, pdf_file):
+def txt_to_pdf(input_file, output_file):
+    """Convert a text file to a PDF."""
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-   
-    with open(txt_file, 'r') as file:
-        for line in file:
-            pdf.cell(0, 10, txt=line.strip(), ln=True)
-   
-    pdf.output(pdf_file)
-    print(f"PDF generated: {pdf_file}")
 
-def send_email(to_email, subject, body, attachment_path):
+    try:
+        with open(input_file, 'r') as file:
+            for line in file:
+                pdf.cell(0, 10, txt=line.strip(), ln=True)
 
-    from_email = "TransitEase2025@gmail.com"  
+        pdf.output(output_file)
+        print(f"PDF generated: {output_file}")
+    except FileNotFoundError:
+        print(f"Error: {input_file} not found.")
 
-    with open ('data/app_password.pkl', 'rb') as file:
-        from_password = pickle.load(file)   
 
-    print(from_password)
+def send_email(sender_email, sender_password, recipient_email, subject, body, attachment_path):
+    """Send an email with an attachment."""
+    try:
+        # Set up the MIME
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = recipient_email
+        message['Subject'] = subject
 
-    msg = MIMEMultipart()
-    msg['From'] = from_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
+        # Add body to the email
+        message.attach(MIMEText(body, 'plain'))
 
-    msg.attach(MIMEText(body, 'plain'))
+        # Attach the file
+        with open(attachment_path, "rb") as attachment:
+            mime_base = MIMEBase('application', 'octet-stream')
+            mime_base.set_payload(attachment.read())
+            encoders.encode_base64(mime_base)
+            mime_base.add_header('Content-Disposition', f'attachment; filename={os.path.basename(attachment_path)}')
+            message.attach(mime_base)
 
-    with open(attachment_path, "rb") as attachment:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f"attachment; filename={attachment_path}")
-        msg.attach(part)
+        # Connect to the server and send the email
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(message)
 
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        server.starttls()
-        server.login(from_email, from_password)
-        server.send_message(msg)
+        print(f"Email sent to {recipient_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
-    print(f"Email sent to {to_email}")
 
 if __name__ == "__main__":
-    txt_file = "INVOICE.TXT"
-    pdf_file = "INVOICE.PDF"
-    recipient_email = input("Enter recipient email: ")
+    # File paths
+    txt_file = "data/booking_details.txt"
+    pdf_file = "data/booking_details.pdf"
+
+    # Email credentials and recipient
+    sender_email = "TransitEase2025@gmail.com"  # Replace with your email
+    with open ('data/app_password.pkl', 'rb') as file:
+        sender_password = pickle.load(file)
+
+    recipient_email = sys.argv[1]
+
+    subject = "Your Booking Details"
+    body = "Dear Customer,\n\nPlease find attached your booking details in PDF format.\n\nBest regards,\nTransitEase2025 Team"
 
     # Convert TXT to PDF
     txt_to_pdf(txt_file, pdf_file)
 
-    # Send email with the generated PDF
-    email_subject = "Your Invoice"
-    email_body = "Please find your invoice attached."
-    send_email(recipient_email, email_subject, email_body, pdf_file)
-
+    # Send email with the PDF attachment
+    send_email(sender_email, sender_password, recipient_email, subject, body, pdf_file)
