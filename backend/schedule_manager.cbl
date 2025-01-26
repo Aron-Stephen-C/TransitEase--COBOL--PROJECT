@@ -101,9 +101,13 @@
            02    WS-MONTH    PIC 99.
            02    WS-DAY    PIC 99.
        01  WS-INPUT-DATE.
-           02    WS-I-MONTH    PIC 99/.
-           02    WS-I-DAY    PIC 99/.
+           02    WS-I-MONTH    PIC 99.
+           02    WS-I-DAY    PIC 99.
            02    WS-I-YEAR    PIC 99.
+       01  WS-D-INPUT-DATE.
+           02    WS-D-I-MONTH    PIC 99.
+           02    WS-D-I-DAY    PIC 99.
+           02    WS-D-I-YEAR    PIC 99.
        01  WS-MONTH-CHECKER PIC 99.
            88  WS-MONTHS-31    VALUE 1,3,5,7,8,10,12.
            88  WS-MONTHS-30    VALUE 4,6,9,11.
@@ -120,6 +124,12 @@
            02    WS-I-SECOND    PIC 99.
            02    WS-I-MSECOND    PIC 99.
            02    WS-I-TIME-FORMAT    PIC XX.
+       01  WS-INPUT-D-TIME.
+           02    WS-D-I-HOUR    PIC 99.
+           02    WS-D-I-MINUTE    PIC 99.
+           02    WS-D-I-SECOND    PIC 99.
+           02    WS-D-I-MSECOND    PIC 99.
+           02    WS-D-I-TIME-FORMAT    PIC XX.
        01  WS-INCREMENT-VALUE    PIC 9(3).
        01  WS-EOF    PIC X.
        01  WS-GENERATED-ID.
@@ -140,7 +150,10 @@
                03    WS-TS-COLON-2    PIC X VALUE ':'.
                03    WS-TS-SECOND    PIC 99.
        01  WS-TIME-STAMP-D-A.
-           02    WS-DA-DATE    PIC 99/99/99.
+           02    WS-DA-DATE.
+               03    WS-DA-MONTH PIC 99/.
+               03    WS-DA-DAY PIC 99/.
+               03    WS-DA-YEAR PIC 99.
            02    WS-DA-FILLER-SPACE-1    PIC X(3) VALUE SPACES.
            02    WS-DA-TIME.
                03    WS-DA-HOUR    PIC 99.
@@ -223,6 +236,7 @@
        01  WS-TIME-FORMAT-CHOICE    PIC X.
        01  WS-STATUS-CANCEL PIC 9.
        01  WS-REENTER-CHOICE     PIC X(3) VALUE 'N'.
+       01  WS-TIME-FORMAT-CONTROL-FLAG    PIC 9. 
 
        LINKAGE SECTION.
        
@@ -269,6 +283,7 @@
            MOVE SPACES TO WS-ROUTES-RECORD
            MOVE SPACES TO WS-ROUTE-MENU-CHOICE
            PERFORM UNTIL WS-ROUTE-MENU-CHOICE = '4'
+           MOVE SPACES TO WS-REENTER-CHOICE
            PERFORM CLEAR
            DISPLAY "***************************************************"
            DISPLAY "*                 Add Route Page                  *"
@@ -303,7 +318,7 @@
 
            END-PERFORM
            .
-
+      *            ----------------add route----------------
        ADD-ROUTE.
            PERFORM CLEAR
            DISPLAY " "
@@ -327,14 +342,32 @@
            IF WS-ROUTE-ORIGIN = SPACES OR WS-ROUTE-DESTINATION = SPACES
            OR WS-ROUTE-DISTANCE = ZEROES OR WS-ROUTE-BASE-PRICE = ZEROES
                PERFORM FILL-ALL-THE-FIELDS
-               PERFORM ADD-ROUTE-PAGE
+               ACCEPT WS-BUFFER
+           ELSE
+               PERFORM RECORD-ROUTE
+               DISPLAY ' '
+               PERFORM SUCCESS-ADD-ROUTE-DISPLAY
            END-IF
 
-           PERFORM RECORD-ROUTE
-           DISPLAY ' '
-           PERFORM SUCCESS-ADD-ROUTE-DISPLAY
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to add route again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
 
-           ACCEPT WS-BUFFER
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM ADD-ROUTE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        UPDATE-ROUTE.
@@ -346,7 +379,7 @@
            DISPLAY ' '
            PERFORM TRAVERSAL-ROUTE-RECORD
            DISPLAY ' '
-           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           DISPLAY 'Route ID : ' WITH NO ADVANCING
            ACCEPT FS-ROUTE-ID
 
            OPEN I-O FS-ROUTES-FILE
@@ -375,13 +408,16 @@
                    OR WS-ROUTE-DISTANCE = ZEROES OR 
                    WS-ROUTE-BASE-PRICE = ZEROES
                        PERFORM FILL-ALL-THE-FIELDS
-                       PERFORM ADD-ROUTE-PAGE
                    ELSE
                        MOVE WS-ROUTE-ORIGIN TO FS-ROUTE-ORIGIN
                        MOVE WS-ROUTE-DESTINATION TO FS-ROUTE-DESTINATION
                        MOVE WS-ROUTE-DISTANCE TO FS-ROUTE-DISTANCE
-                       MOVE WS-ROUTE-BASE-PRICE TO 
-                       FS-ROUTE-BASE-PRICE
+                       MOVE WS-ROUTE-BASE-PRICE TO FS-ROUTE-BASE-PRICE
+
+                       PERFORM GENERATE-TIME-STAMP
+
+                       MOVE WS-TIME-STAMP TO FS-ROUTE-TIME-STAMP
+
                        REWRITE FS-ROUTES-RECORD
                            INVALID KEY 
                                 PERFORM ERROR-UPDATE-MESSAGE
@@ -391,7 +427,26 @@
                    END-IF 
                END-READ
            CLOSE FS-ROUTES-FILE
-           ACCEPT WS-BUFFER
+           
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to update route again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM UPDATE-ROUTE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        REMOVE-ROUTE.
@@ -402,7 +457,7 @@
            DISPLAY ' '
            PERFORM TRAVERSAL-ROUTE-RECORD
            DISPLAY " "
-           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           DISPLAY 'Route ID : ' WITH NO ADVANCING
            ACCEPT FS-ROUTE-ID
            
            OPEN I-O FS-ROUTES-FILE
@@ -411,11 +466,32 @@
                NOT INVALID KEY PERFORM  SUCCESS-REMOVE-DISPLAY
            END-DELETE
            CLOSE FS-ROUTES-FILE
-           .
 
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to remove route again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM REMOVE-ROUTE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
+           .
+      *            ----------------add vehicle----------------
        ADD-VEHICLE-PAGE.
            MOVE SPACES TO WS-VEHICLE-MENU-CHOICE
            PERFORM UNTIL WS-VEHICLE-MENU-CHOICE = '4'
+           MOVE SPACES TO WS-REENTER-CHOICE
            PERFORM CLEAR
            DISPLAY "***************************************************"
            DISPLAY "*                Add Vehicle Page                 *"
@@ -442,17 +518,18 @@
                    WHEN '3'
                        PERFORM REMOVE-VEHICLE
                    WHEN '4'
-                       PERFORM SCHEDULE-MAIN-MENU
+                       CONTINUE
                    WHEN OTHER
                        PERFORM INVALID-INPUT-MESSAGE
-                       PERFORM ADD-VEHICLE-PAGE
                END-EVALUATE
            END-PERFORM
            .
 
        ADD-VEHICLE.
            PERFORM CLEAR
+
            PERFORM ADD-VEHICLE-DISPLAY
+
            DISPLAY ' '
            DISPLAY " Enter Vehicle Serial: " WITH NO ADVANCING
            ACCEPT WS-VEHICLE-SERIAL
@@ -465,8 +542,6 @@
            DISPLAY " Enter Vehicle Price Factor: " WITH NO ADVANCING
            ACCEPT WS-VEHICLE-PRICE-FACTOR
            
-           MOVE FUNCTION LOWER-CASE(WS-VEHICLE-SERIAL) TO 
-           WS-VEHICLE-SERIAL
            MOVE FUNCTION LOWER-CASE(WS-VEHICLE-CLASS) TO 
            WS-VEHICLE-CLASS
 
@@ -475,14 +550,31 @@
            WS-VEHICLE-PRICE-FACTOR = ZEROES
                DISPLAY ' '
                PERFORM FILL-ALL-THE-FIELDS
-               PERFORM ADD-VEHICLE-PAGE
            ELSE
-               PERFORM RECORD-VEHICLE
                DISPLAY ' '
+               PERFORM RECORD-VEHICLE
                PERFORM SUCCESS-ADD-VEHICLE-MESSAGE
            END-IF
 
-           ACCEPT WS-BUFFER
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to add vehicle again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM ADD-VEHICLE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        UPDATE-VEHICLE.
@@ -490,7 +582,8 @@
            PERFORM UPDATE-VEHICLE-DISPLAY
            DISPLAY ' '
            PERFORM TRAVERSAL-VEHICLE-RECORD
-           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           DISPLAY ' '
+           DISPLAY 'Vehicle ID : ' WITH NO ADVANCING
            ACCEPT FS-VEHICLE-ID
 
            OPEN I-O FS-VEHICLES-FILE
@@ -522,7 +615,6 @@
                        WS-VEHICLE-LICENSE-PLATE = SPACES OR 
                        WS-VEHICLE-PRICE-FACTOR = SPACES
                            PERFORM FILL-ALL-THE-FIELDS
-                           PERFORM ADD-VEHICLE-PAGE
                    ELSE
                        MOVE WS-VEHICLE-SERIAL TO FS-VEHICLE-SERIAL
                        MOVE WS-VEHICLE-CLASS TO FS-VEHICLE-CLASS
@@ -531,6 +623,10 @@
                        FS-VEHICLE-LICENSE-PLATE
                        MOVE WS-VEHICLE-PRICE-FACTOR TO 
                        FS-VEHICLE-PRICE-FACTOR
+
+                       PERFORM GENERATE-TIME-STAMP
+                       MOVE WS-TIME-STAMP TO FS-VEHICLE-TIME-STAMP
+
                        REWRITE FS-VEHICLES-RECORD    
                            INVALID KEY
                                PERFORM UPDATE-FAILED-DISPLAY
@@ -540,7 +636,26 @@
                    END-IF
                END-READ
            CLOSE FS-VEHICLES-FILE
-           ACCEPT WS-BUFFER
+           
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to update vehicle again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM UPDATE-VEHICLE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        REMOVE-VEHICLE.
@@ -549,7 +664,7 @@
            DISPLAY ' '
            PERFORM TRAVERSAL-VEHICLE-RECORD
            DISPLAY ' '
-           DISPLAY 'Search ID : ' WITH NO ADVANCING
+           DISPLAY 'Vehicle ID : ' WITH NO ADVANCING
            ACCEPT FS-VEHICLE-ID
 
            OPEN I-O FS-VEHICLES-FILE
@@ -559,13 +674,33 @@
                NOT INVALID KEY PERFORM SUCCESS-REMOVE-DISPLAY
                            
            CLOSE FS-VEHICLES-FILE
-           ACCEPT WS-BUFFER
+
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to remove vehicle again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM REMOVE-VEHICLE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
       *            ----------------add schedule----------------
        ADD-SCHEDULE-PAGE. 
            MOVE SPACES TO WS-SCHEDULE-MENU-CHOICE
            PERFORM UNTIL WS-SCHEDULE-MENU-CHOICE = '5'
+           MOVE SPACES TO WS-REENTER-CHOICE
            PERFORM CLEAR
            DISPLAY "***************************************************"
            DISPLAY "*               Add Schedule Page                 *"
@@ -597,8 +732,6 @@
                        CONTINUE
                    WHEN OTHER
                        PERFORM INVALID-CHOICE-MESSAGE
-                       ACCEPT WS-BUFFER
-                       PERFORM ADD-SCHEDULE-PAGE
                END-EVALUATE
            END-PERFORM 
            ACCEPT WS-BUFFER
@@ -675,7 +808,9 @@
                                     PERFORM INVALID-YEAR
                                     DISPLAY ' '
                                 ELSE
-                                    MOVE WS-INPUT-DATE TO WS-DA-DATE
+                                    MOVE WS-I-MONTH TO WS-DA-MONTH
+                                    MOVE WS-I-DAY TO WS-DA-DAY
+                                    MOVE WS-I-YEAR TO WS-DA-YEAR
                                     MOVE 1 TO WS-BOOL
                            END-IF
                        END-IF
@@ -684,7 +819,7 @@
 
            MOVE 0 TO WS-BOOL
 
-           PERFORM UNTIL WS-BOOL = 1
+           PERFORM UNTIL WS-BOOL = 1 
                DISPLAY ' '
                PERFORM TIME-DEPARTURE
                DISPLAY ' '
@@ -697,12 +832,18 @@
                EVALUATE WS-TIME-FORMAT-CHOICE
                    WHEN '1'
                        MOVE 'AM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
                    WHEN '2'
                        MOVE 'PM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
                    WHEN OTHER
                        PERFORM INVALID-CHOICE-MESSAGE
                END-EVALUATE
+           END-PERFORM
+
+           MOVE 0 TO WS-BOOL
                
+           PERFORM UNTIL WS-BOOL = 1 
                DISPLAY " "
            DISPLAY "***************************************************"
            DISPLAY "*               TIME FOR " WS-I-TIME-FORMAT 
@@ -730,7 +871,7 @@
                        MOVE 'PM' TO WS-TIME-FORMAT
                END-EVALUATE
 
-               IF WS-I-HOUR < 0 OR WS-I-HOUR > 12 THEN
+               IF WS-I-HOUR <= 0 OR WS-I-HOUR > 12 THEN
                    PERFORM INVALID-HOUR
                    DISPLAY ' '
                ELSE 
@@ -748,12 +889,15 @@
 
            END-PERFORM
 
+           MOVE WS-INPUT-DATE TO WS-D-INPUT-DATE
+           MOVE WS-INPUT-TIME TO WS-INPUT-D-TIME
+
            MOVE WS-TIME-STAMP-D-A TO WS-S-DEPARTURE-TIME
 
            MOVE 0 TO WS-BOOL
            
            DISPLAY ' '
-
+      *    --------ARRIVAL--------
            PERFORM ARRIVAL-TIME-DISPLAY
            DISPLAY ' '
            PERFORM UNTIL WS-BOOL = 1
@@ -764,9 +908,7 @@
                DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
                ACCEPT WS-I-YEAR
 
-               ACCEPT WS-DATE FROM DATE
-
-               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+               IF WS-I-MONTH < WS-D-I-MONTH OR WS-I-MONTH > 12 THEN
                    PERFORM INVALID-MONTH
                    DISPLAY ' '
                ELSE
@@ -785,12 +927,12 @@
                        PERFORM INVALID-MONTH
                        DISPLAY ' '
                    ELSE
-                       IF WS-I-DAY < WS-DAY THEN
+                       IF WS-I-DAY < WS-D-I-DAY THEN
                            PERFORM INVALID-LESS-DAY
                            DISPLAY ' '
                        ELSE
-                           IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY 
-                           < WS-DAY)
+                           IF (WS-I-MONTH = WS-D-I-MONTH AND WS-I-DAY 
+                           < WS-D-I-DAY)
                                OR WS-I-DAY > WS-LIMIT-DAYS THEN
                                 PERFORM INVALID-DAY
                                 DISPLAY ' '
@@ -799,7 +941,9 @@
                                     PERFORM INVALID-YEAR
                                     DISPLAY ' '
                                 ELSE
-                                    MOVE WS-INPUT-DATE TO WS-DA-DATE
+                                    MOVE WS-I-MONTH TO WS-DA-MONTH
+                                    MOVE WS-I-DAY TO WS-DA-DAY
+                                    MOVE WS-I-YEAR TO WS-DA-YEAR
                                     MOVE 1 TO WS-BOOL
                                 END-IF
                             END-IF
@@ -823,10 +967,18 @@
                EVALUATE WS-TIME-FORMAT-CHOICE
                    WHEN '1'
                        MOVE 'AM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
                    WHEN '2'
                        MOVE 'PM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
+                   WHEN OTHER 
+                       PERFORM INVALID-CHOICE-MESSAGE
                END-EVALUATE
+           END-PERFORM
 
+           MOVE 0 TO WS-BOOL
+
+           PERFORM UNTIL WS-BOOL = 1
                DISPLAY ' '
                DISPLAY " "
            DISPLAY "***************************************************"
@@ -885,6 +1037,26 @@
                DISPLAY ' '
                PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
            END-IF
+
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to add schedule again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM ADD-SCHEDULE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        UPDATE-SCHEDULE.
@@ -895,7 +1067,7 @@
            DISPLAY "***************************************************"
            PERFORM TRAVERSAL-SCHEDULE
            DISPLAY ' '
-           DISPLAY 'Search ID: ' WITH NO ADVANCING
+           DISPLAY 'Schedule ID: ' WITH NO ADVANCING
            ACCEPT FS-SCHEDULE-ID
 
 
@@ -909,23 +1081,51 @@
            DISPLAY "***************************************************"
            DISPLAY "*                  UPDATE INFORMATION             *"
            DISPLAY "***************************************************"
-    
-                   DISPLAY ' '
-                   DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
-                   ACCEPT WS-I-MONTH
-                   DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
-                   ACCEPT WS-I-DAY
-                   DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
-                   ACCEPT WS-I-YEAR
+           
+           PERFORM TRAVERSAL-ROUTE-RECORD
+           DISPLAY ' '
+           DISPLAY "Enter Route ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-ROUTE-ID
+           MOVE WS-FK-ROUTE-ID TO FS-ROUTE-ID
+           OPEN INPUT FS-ROUTES-FILE
+               READ FS-ROUTES-FILE
+               INVALID KEY 
+               PERFORM CLEAR
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE
+               END-READ
+           CLOSE FS-ROUTES-FILE
+       
+           PERFORM CLEAR
+           PERFORM TRAVERSAL-VEHICLE-RECORD
+           DISPLAY ' '
+           DISPLAY "Enter Vehicle ID: " WITH NO ADVANCING
+           ACCEPT WS-FK-VEHICLE-ID
+           MOVE WS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+           OPEN INPUT FS-VEHICLES-FILE
+               READ FS-VEHICLES-FILE
+               INVALID KEY 
+               PERFORM CLEAR
+               PERFORM INVALID-INPUT-MESSAGE
+               PERFORM ADD-SCHEDULE
+               END-READ
+           CLOSE FS-VEHICLES-FILE
+
+           MOVE 0 TO WS-BOOL
+           
+           PERFORM CLEAR
+           PERFORM DEPARTURE-TIME-DISPLAY
+           DISPLAY ' '
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY 'Enter Month[MM] : ' WITH NO ADVANCING
+               ACCEPT WS-I-MONTH
+               DISPLAY 'Enter Day[DD] : ' WITH NO ADVANCING
+               ACCEPT WS-I-DAY
+               DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
+               ACCEPT WS-I-YEAR
 
                ACCEPT WS-DATE FROM DATE
 
-               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
-                   DISPLAY ' '
-                   PERFORM INVALID-MONTH
-                   PERFORM UPDATE-SCHEDULE
-                   DISPLAY ' '
-               ELSE
                    MOVE WS-I-MONTH TO WS-MONTH-CHECKER
 
                    EVALUATE TRUE
@@ -937,44 +1137,62 @@
                            MOVE 28 TO WS-LIMIT-DAYS
                    END-EVALUATE
 
-
-                   IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY < WS-DAY)
-                   OR WS-I-DAY > WS-LIMIT-DAYS THEN
-                       PERFORM INVALID-DAY
+                   IF WS-I-MONTH > 12 THEN
+                       PERFORM INVALID-MONTH
+                       DISPLAY ' '
                    ELSE
-                       IF WS-I-YEAR NOT = WS-YEAR
-                           PERFORM INVALID-YEAR
-                       ELSE
-                           MOVE WS-INPUT-DATE TO WS-DA-DATE
-                           DISPLAY WS-DA-DATE
-                            MOVE 1 TO WS-BOOL
+                           IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY 
+                           < WS-DAY)
+                               OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                                PERFORM INVALID-DAY
+                                DISPLAY ' '
+                           ELSE
+                                IF WS-I-YEAR NOT = WS-YEAR THEN
+                                    PERFORM INVALID-YEAR
+                                    DISPLAY ' '
+                                ELSE
+                                    MOVE WS-I-MONTH TO WS-DA-MONTH
+                                    MOVE WS-I-DAY TO WS-DA-DAY
+                                    MOVE WS-I-YEAR TO WS-DA-YEAR
+                                    MOVE 1 TO WS-BOOL
+                           END-IF
                        END-IF
                    END-IF
-               END-IF
-
+           END-PERFORM
 
            MOVE 0 TO WS-BOOL
 
-           PERFORM UNTIL WS-BOOL = 1
-                DISPLAY " "
-           DISPLAY "***************************************************"
-           DISPLAY "*                   TIME FORMAT                   *"
-           DISPLAY "***************************************************"
-           DISPLAY ' '
+           PERFORM UNTIL WS-BOOL = 1 
+               DISPLAY ' '
+               PERFORM TIME-DEPARTURE
+               DISPLAY ' '
                DISPLAY '1 - Morning (AM)'
                DISPLAY '2 - Evening / Afternoon (PM)'
                DISPLAY ' '
                DISPLAY 'Enter your choice : ' WITH NO ADVANCING
                ACCEPT WS-TIME-FORMAT-CHOICE
 
-
                EVALUATE WS-TIME-FORMAT-CHOICE
                    WHEN '1'
                        MOVE 'AM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
                    WHEN '2'
                        MOVE 'PM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
+                   WHEN OTHER
+                       PERFORM INVALID-CHOICE-MESSAGE
                END-EVALUATE
+           END-PERFORM
 
+           MOVE 0 TO WS-BOOL
+               
+           PERFORM UNTIL WS-BOOL = 1 
+               DISPLAY " "
+           DISPLAY "***************************************************"
+           DISPLAY "*               TIME FOR " WS-I-TIME-FORMAT 
+           " - DEPARTURE           *" 
+           DISPLAY "***************************************************"
+    
                DISPLAY ' '
                DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
                ACCEPT WS-I-HOUR
@@ -996,27 +1214,33 @@
                        MOVE 'PM' TO WS-TIME-FORMAT
                END-EVALUATE
 
-
-               IF WS-I-HOUR < 0 OR WS-I-HOUR > 23 THEN
-                  PERFORM INVALID-HOUR
-               ELSE
+               IF WS-I-HOUR <= 0 OR WS-I-HOUR > 12 THEN
+                   PERFORM INVALID-HOUR
+                   DISPLAY ' '
+               ELSE 
                    IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
                     WS-I-MINUTE > 59 THEN
-                   PERFORM INVALID-MINUTE
+                    PERFORM INVALID-MINUTE
+                    DISPLAY ' '
                    ELSE
                        MOVE WS-I-HOUR TO WS-DA-HOUR
                        MOVE WS-I-MINUTE TO WS-DA-MINUTES
+                       MOVE WS-I-TIME-FORMAT TO WS-DA-TIME-FORMAT
                        MOVE 1 TO WS-BOOL
                    END-IF
                END-IF
 
-
            END-PERFORM
-           DISPLAY WS-TIME-STAMP-D-A
+
+           MOVE WS-INPUT-DATE TO WS-D-INPUT-DATE
+           MOVE WS-INPUT-TIME TO WS-INPUT-D-TIME
+
            MOVE WS-TIME-STAMP-D-A TO WS-S-DEPARTURE-TIME
 
            MOVE 0 TO WS-BOOL
-
+           
+           DISPLAY ' '
+      *    --------ARRIVAL--------
            PERFORM ARRIVAL-TIME-DISPLAY
            DISPLAY ' '
            PERFORM UNTIL WS-BOOL = 1
@@ -1027,14 +1251,12 @@
                DISPLAY 'Enter Year[YY] : ' WITH NO ADVANCING
                ACCEPT WS-I-YEAR
 
-               ACCEPT WS-DATE FROM DATE
-
-               IF WS-I-MONTH < WS-MONTH OR WS-I-MONTH > 12 THEN
+               IF WS-I-MONTH < WS-D-I-MONTH OR WS-I-MONTH > 12 THEN
                    PERFORM INVALID-MONTH
+                   DISPLAY ' '
                ELSE
                    MOVE WS-I-MONTH TO WS-MONTH-CHECKER
-
-
+       
                    EVALUATE TRUE
                        WHEN WS-MONTHS-31
                            MOVE 31 TO WS-LIMIT-DAYS
@@ -1043,46 +1265,65 @@
                        WHEN OTHER
                            MOVE 28 TO WS-LIMIT-DAYS
                    END-EVALUATE
-
-
-                   IF (WS-I-MONTH = WS-MONTH AND WS-I-DAY < WS-DAY)
-                   OR WS-I-DAY > WS-LIMIT-DAYS THEN
-                       PERFORM INVALID-DAY
+       
+                  IF WS-I-MONTH > 12 THEN
+                       PERFORM INVALID-MONTH
+                       DISPLAY ' '
                    ELSE
-                       IF WS-I-YEAR NOT = WS-YEAR
-                           PERFORM INVALID-YEAR
+                       IF WS-I-DAY < WS-D-I-DAY THEN
+                           PERFORM INVALID-LESS-DAY
+                           DISPLAY ' '
                        ELSE
-                           MOVE WS-INPUT-DATE TO WS-DA-DATE
-                            MOVE 1 TO WS-BOOL
+                           IF (WS-I-MONTH = WS-D-I-MONTH AND WS-I-DAY 
+                           < WS-D-I-DAY)
+                               OR WS-I-DAY > WS-LIMIT-DAYS THEN
+                                PERFORM INVALID-DAY
+                                DISPLAY ' '
+                           ELSE
+                                IF WS-I-YEAR NOT = WS-YEAR THEN
+                                    PERFORM INVALID-YEAR
+                                    DISPLAY ' '
+                                ELSE
+                                    MOVE WS-I-MONTH TO WS-DA-MONTH
+                                    MOVE WS-I-DAY TO WS-DA-DAY
+                                    MOVE WS-I-YEAR TO WS-DA-YEAR
+                                    MOVE 1 TO WS-BOOL
+                                END-IF
+                            END-IF
+                           END-IF
                        END-IF
                    END-IF
-               END-IF
            END-PERFORM
-
 
            MOVE 0 TO WS-BOOL
 
-
            PERFORM UNTIL WS-BOOL = 1
-               DISPLAY " "
-           DISPLAY "***************************************************"
-           DISPLAY "*             TIME FORMAT - ARRIVAL               *"
-           DISPLAY "***************************************************"
+               DISPLAY ' '
+               PERFORM ARRIVAL-TIME-DISPLAY
                DISPLAY ' '
                DISPLAY '1 - Morning (AM)'
                DISPLAY '2 - Evening / Afternoon (PM)'
                DISPLAY ' '
                DISPLAY 'Enter your choice : ' WITH NO ADVANCING
                ACCEPT WS-TIME-FORMAT-CHOICE
-     
+      
                EVALUATE WS-TIME-FORMAT-CHOICE
                    WHEN '1'
                        MOVE 'AM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
                    WHEN '2'
                        MOVE 'PM' TO WS-I-TIME-FORMAT
+                       MOVE 1 TO WS-BOOL
+                   WHEN OTHER 
+                       PERFORM INVALID-CHOICE-MESSAGE
                END-EVALUATE
+           END-PERFORM
 
-                    DISPLAY " "
+           MOVE 0 TO WS-BOOL
+
+           PERFORM UNTIL WS-BOOL = 1
+               DISPLAY ' '
+               DISPLAY " "
            DISPLAY "***************************************************"
            DISPLAY "*               TIME FOR " WS-I-TIME-FORMAT 
            " - ARRIVAL             *" 
@@ -1090,11 +1331,11 @@
                DISPLAY ' '
                DISPLAY 'Enter Hour [HH]: ' WITH NO ADVANCING
                ACCEPT WS-I-HOUR
-               DISPLAY 'Enter Minute [MM]: ' WITH NO ADVANCING
+               DISPLAY 'Enter Minute [MIN/S]: ' WITH NO ADVANCING
                ACCEPT WS-I-MINUTE
-     
+      
                ACCEPT WS-TIME FROM TIME
-     
+      
                EVALUATE TRUE
                    WHEN WS-HOUR = 0
                        MOVE 12 TO WS-HOUR
@@ -1107,13 +1348,15 @@
                        COMPUTE WS-HOUR = WS-HOUR - 12
                        MOVE 'PM' TO WS-TIME-FORMAT
                END-EVALUATE
-     
-               IF WS-I-HOUR < 0 OR WS-I-HOUR > 59  THEN
+      
+               IF WS-I-HOUR < 0 OR WS-I-HOUR > 12  THEN
                    PERFORM INVALID-HOUR
-               ELSE
+                   DISPLAY ' '
+               ELSE 
                    IF (WS-I-HOUR = WS-HOUR AND WS-I-MINUTE < 0) OR
                     WS-I-MINUTE > 59 THEN
                    PERFORM INVALID-MINUTE
+                   DISPLAY ' '
                    ELSE
                        MOVE WS-I-HOUR TO WS-DA-HOUR
                        MOVE WS-I-MINUTE TO WS-DA-MINUTES
@@ -1121,16 +1364,25 @@
                        MOVE 1 TO WS-BOOL
                    END-IF
                END-IF
-     
+      
            END-PERFORM
 
-               IF WS-I-MONTH = SPACES OR WS-I-DAY = SPACES OR
-               WS-I-YEAR = SPACES OR WS-I-HOUR = SPACES OR
-               WS-I-MINUTE = SPACES
-                   PERFORM FILL-ALL-THE-FIELDS
-                   PERFORM ADD-VEHICLE-PAGE
-               
-               ELSE
+           MOVE WS-TIME-STAMP-D-A TO WS-S-ARRIVAL-TIME
+    
+           IF WS-S-ARRIVAL-TIME < WS-S-DEPARTURE-TIME
+               AND WS-DA-DATE = WS-DA-DATE
+               PERFORM INVALID-ARRIVAL-TIME
+               DISPLAY ' '
+               PERFORM ADD-SCHEDULE
+           ELSE
+               MOVE 'active' TO WS-S-STATUS
+               PERFORM RECORD-SCHEDULE
+               DISPLAY ' '
+               PERFORM SUCCESS-ADD-SCHEDULE-MESSAGE
+           END-IF
+                   MOVE WS-FK-ROUTE-ID TO FS-FK-ROUTE-ID
+                   MOVE WS-FK-VEHICLE-ID TO FS-FK-VEHICLE-ID
+                 
                    MOVE WS-S-DEPARTURE-TIME TO FS-S-DEPARTURE-TIME
                    MOVE WS-S-ARRIVAL-TIME TO FS-S-ARRIVAL-TIME
                    REWRITE FS-SCHEDULES-RECORD
@@ -1139,10 +1391,28 @@
                             NOT INVALID KEY
                                 PERFORM SUCCESS-UPDATE-MESSAGE
                        END-REWRITE
-                   END-IF
                END-READ
            CLOSE FS-SCHEDULES-FILE
-           ACCEPT WS-BUFFER
+
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to update schedule again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM UPDATE-SCHEDULE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
        
        CANCEL-SCHEDULE.
@@ -1153,7 +1423,7 @@
            DISPLAY ' '
            PERFORM TRAVERSAL-SCHEDULE
            DISPLAY ' '
-           DISPLAY 'Search ID: ' WITH NO ADVANCING
+           DISPLAY 'Schedule ID: ' WITH NO ADVANCING
            ACCEPT FS-SCHEDULE-ID
 
            OPEN I-O FS-SCHEDULES-FILE
@@ -1195,6 +1465,26 @@
                    END-REWRITE
                END-READ
            CLOSE FS-SCHEDULES-FILE
+
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to cancel schedule again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM CANCEL-SCHEDULE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
        REMOVE-SCHEDULE.
@@ -1214,15 +1504,29 @@
                NOT INVALID KEY PERFORM  SUCCESS-REMOVE-DISPLAY
            END-DELETE
            CLOSE FS-SCHEDULES-FILE
+
+           PERFORM UNTIL WS-REENTER-CHOICE = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to remove schedule again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REENTER-CHOICE
+
+               MOVE FUNCTION UPPER-CASE(WS-REENTER-CHOICE) TO 
+               WS-REENTER-CHOICE
+
+               EVALUATE WS-REENTER-CHOICE
+                   WHEN 'YES'
+                       PERFORM REMOVE-SCHEDULE
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT-MESSAGE
+               END-EVALUATE
+
+           END-PERFORM
            .
 
-       SUCCESS-ADD-SCHEDULE-MESSAGE.
-           DISPLAY "***************************************************"
-           DISPLAY "*           Success: Schedule Added!              *"
-           DISPLAY "***************************************************"
-           DISPLAY " Press 'enter' key to continue..."
-
-           ACCEPT WS-BUFFER.
+      *            ----------------traversal----------------
 
        TRAVERSAL-VEHICLE-RECORD.
            MOVE SPACES TO WS-EOF
@@ -1321,7 +1625,7 @@
            CLOSE FS-ROUTES-FILE
            CLOSE FS-SCHEDULES-FILE
            .
-
+      *            ----------------record----------------
        RECORD-ROUTE.
            MOVE SPACES TO WS-EOF
            MOVE ZEROES TO WS-INCREMENT-VALUE
@@ -1502,13 +1806,21 @@
            MOVE WS-MINUTE TO WS-TS-MINUTES
            MOVE WS-SECOND TO WS-TS-SECOND
            .
-       
-       REPEAT-STATEMENT.
-           DISPLAY "Do you want to repeat? YES/NO: " WITH NO ADVANCING
-           ACCEPT WS-REPEAT
 
-           MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO WS-REPEAT
-       .
+       SUCCESS-ADD-SCHEDULE-MESSAGE.
+           DISPLAY "***************************************************"
+           DISPLAY "*           Success: Schedule Added!              *"
+           DISPLAY "***************************************************"
+           DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER.    
+
+      *REPEAT-STATEMENT.
+      *    DISPLAY "Do you want to repeat? YES/NO: " WITH NO ADVANCING
+      *    ACCEPT WS-REPEAT
+      *
+      *    MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO WS-REPEAT
+      *.
 
        SUCCESS-UPDATE-MESSAGE.
            DISPLAY " "
@@ -1669,6 +1981,8 @@
            DISPLAY "*              ERROR: INVALID CHOICE!             *"
            DISPLAY "***************************************************"
            DISPLAY " Press 'enter' key to continue..."
+
+           ACCEPT WS-BUFFER
        .
 
        SCHEDULE-NOT-FOUND-DISPLAY.

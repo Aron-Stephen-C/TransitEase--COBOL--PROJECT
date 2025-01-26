@@ -288,7 +288,7 @@
                END-READ
                MOVE FS-CURRENT-USER TO FS-P-USER-ID
            CLOSE FS-CURRENT-USER-FILE
-            OPEN I-O FS-PASSENGER-FILE
+           OPEN I-O FS-PASSENGER-FILE
                READ FS-PASSENGER-FILE
                    KEY IS FS-P-USER-ID
                END-READ
@@ -299,6 +299,7 @@
        USER-MAIN-PAGE.
            PERFORM UNTIL WS-PASSENGER-PAGE-CHOICE = '3'
                PERFORM CLEAR
+               MOVE SPACES TO WS-REPEAT
 
            DISPLAY "***************************************************"-
            "*************"
@@ -318,7 +319,7 @@
            "   "
            DISPLAY " 2 - Cancel Booking                                "-
            "   "
-           DISPLAY " 3 - Back                                          "-
+           DISPLAY " 3 - Quit                                          "-
            "   "
            DISPLAY " "
            DISPLAY " Enter your choice: " WITH NO ADVANCING
@@ -330,7 +331,7 @@
                    WHEN '2'
                        PERFORM UPDATE-BOOKING
                    WHEN '3'
-                       CONTINUE
+                       STOP RUN
                    WHEN OTHER
                        PERFORM INVALID-INPUT
                END-EVALUATE
@@ -341,6 +342,7 @@
        ADD-BOOKING-PAGE.
            MOVE SPACES TO WS-ADD-BOOKING-CHOICE
            PERFORM UNTIL WS-ADD-BOOKING-CHOICE = '3'
+           MOVE SPACES TO WS-REPEAT
                PERFORM CLEAR
            DISPLAY "***************************************************"-
            "****"
@@ -418,9 +420,30 @@
            CLOSE FS-SCHEDULES-FILE
            CLOSE FS-BOOKING-FILE
            ACCEPT WS-BUFFER
+
+           PERFORM UNTIL WS-REPEAT = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to try again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REPEAT
+
+               MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+               WS-REPEAT
+
+               EVALUATE WS-REPEAT
+                   WHEN 'YES'
+                       PERFORM UPDATE-BOOKING
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT
+               END-EVALUATE
+
+               END-PERFORM
            .
 
        SEE-AVAILABLE-SCHEDULES.
+           MOVE SPACES TO WS-REPEAT
            MOVE LOW-VALUES TO WS-SCHEDULE-CHOICE
            PERFORM UNTIL WS-SCHEDULE-CHOICE = '0'
                PERFORM CLEAR
@@ -448,9 +471,31 @@
                        PERFORM SEAT-SELECTION
                END-EVALUATE
            END-PERFORM
+
+           PERFORM UNTIL WS-REPEAT = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to see available schedules again? ['-
+               'YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REPEAT
+
+               MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+               WS-REPEAT
+
+               EVALUATE WS-REPEAT
+                   WHEN 'YES'
+                       PERFORM SEE-AVAILABLE-SCHEDULES
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT
+               END-EVALUATE
+
+               END-PERFORM
            .
 
        SEARCH-SCHEDULE.
+           MOVE SPACES TO WS-REPEAT
            DISPLAY "***************************************************"-
            "****"
            DISPLAY "                   S E A R C H   S C H E D U L E   "-
@@ -542,9 +587,30 @@
                        PERFORM SEAT-SELECTION
                END-EVALUATE
            END-PERFORM
+
+           PERFORM UNTIL WS-REPEAT = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to search again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REPEAT
+
+               MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+               WS-REPEAT
+
+               EVALUATE WS-REPEAT
+                   WHEN 'YES'
+                       PERFORM SEARCH-SCHEDULE    
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT
+               END-EVALUATE
+
+               END-PERFORM
            .
        
        SEAT-SELECTION.
+           MOVE SPACES TO WS-REPEAT
            PERFORM CLEAR
            DISPLAY "***************************************************"-
            "****"
@@ -579,8 +645,35 @@
                DISPLAY " Enter Seat Number: " WITH NO ADVANCING
                ACCEPT WS-SEAT-NUMBER
 
+               IF WS-SEAT-NUMBER = SPACES OR WS-SEAT-NUMBER IS NOT 
+               NUMERIC OR WS-SEAT-NUMBER = ZEROES THEN
+                   DISPLAY ' '
+                   PERFORM INVALID-INPUT
+               PERFORM UNTIL WS-REPEAT = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to try again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REPEAT
 
-               PERFORM PAYMENT-SELECTION
+               MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+               WS-REPEAT
+
+               EVALUATE WS-REPEAT
+                   WHEN 'YES'
+                       PERFORM SEAT-SELECTION
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT
+               END-EVALUATE
+
+               END-PERFORM
+
+               ELSE
+                   PERFORM PAYMENT-SELECTION
+               END-IF
+
+
 
            CLOSE FS-VEHICLES-FILE
            CLOSE FS-ROUTES-FILE
@@ -589,6 +682,7 @@
            .
 
        PAYMENT-SELECTION.
+           MOVE SPACES TO WS-REPEAT
            PERFORM CLEAR
            DISPLAY "***************************************************"-
            "****"
@@ -619,11 +713,57 @@
                    DISPLAY ' '
                    DISPLAY ' Credit Card Number : ' WITH NO ADVANCING
                    ACCEPT WS-CREDIT-CARD-NUMBER
-                   MOVE 'credit-card' TO WS-PAYMENT-METHOD
-                   MOVE 'paid' TO WS-BOOKING-STATUS
-                   PERFORM BOOKING-CONFIRMATION
+
+                   IF WS-CREDIT-CARD-NUMBER = SPACES THEN
+                       DISPLAY ' '
+                       PERFORM INVALID-INPUT
+
+                       PERFORM UNTIL WS-REPEAT = 'NO'
+                       DISPLAY ' '
+                       DISPLAY 'Do you want to try again? [YES/NO] '
+                       WITH NO ADVANCING
+                       ACCEPT WS-REPEAT
+       
+                       MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+                       WS-REPEAT
+       
+                       EVALUATE WS-REPEAT
+                           WHEN 'YES'
+                               PERFORM PAYMENT-SELECTION
+                           WHEN 'NO'
+                               CONTINUE
+                           WHEN OTHER
+                              PERFORM INVALID-INPUT
+                       END-EVALUATE
+       
+                       END-PERFORM
+                   ELSE
+                       MOVE 'credit-card' TO WS-PAYMENT-METHOD
+                       MOVE 'paid' TO WS-BOOKING-STATUS
+                       PERFORM BOOKING-CONFIRMATION
+                   END-IF
                WHEN OTHER
                   PERFORM INVALID-CHOICE-MESSAGE
+
+                  PERFORM UNTIL WS-REPEAT = 'NO'
+               DISPLAY ' '
+               DISPLAY 'Do you want to try again? [YES/NO] '
+               WITH NO ADVANCING
+               ACCEPT WS-REPEAT
+
+               MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+               WS-REPEAT
+
+               EVALUATE WS-REPEAT
+                   WHEN 'YES'
+                       PERFORM PAYMENT-SELECTION
+                   WHEN 'NO'
+                       CONTINUE
+                   WHEN OTHER
+                      PERFORM INVALID-INPUT
+               END-EVALUATE
+
+               END-PERFORM
            END-EVALUATE
            .
 
@@ -644,7 +784,7 @@
            .
 
        BOOKING-CONFIRMATION.
-
+           MOVE SPACES TO WS-REPEAT
            DISPLAY "***************************************************"-
            "*************"
            DISPLAY "                    BOOKING SUMMARY                "-
@@ -697,14 +837,38 @@
                        END-WRITE
                    CLOSE FS-CURRENT-BOOKING-FILE
                    PERFORM TICKETING
+                   DISPLAY " Press 'enter' key to continue..."
+                   ACCEPT WS-BUFFER
+                   GO TO USER-MAIN-PAGE
                WHEN 'no'
                    PERFORM DISCONTINUE-MESSAGE
+                   DISPLAY " Press 'enter' key to continue..."
+                   ACCEPT WS-BUFFER
+                   GO TO USER-MAIN-PAGE
                WHEN OTHER
                   PERFORM INVALID-CHOICE-MESSAGE
 
+                  PERFORM UNTIL WS-REPEAT = 'NO'
+                   DISPLAY ' '
+                   DISPLAY 'Do you want to try again? [YES/NO] '
+                   WITH NO ADVANCING
+                   ACCEPT WS-REPEAT
+      
+                   MOVE FUNCTION UPPER-CASE(WS-REPEAT) TO 
+                   WS-REPEAT
+      
+                   EVALUATE WS-REPEAT
+                       WHEN 'YES'
+                           PERFORM BOOKING-CONFIRMATION
+                       WHEN 'NO'
+                           CONTINUE
+                       WHEN OTHER
+                          PERFORM INVALID-INPUT
+                   END-EVALUATE
+      
+                   END-PERFORM
+
            END-EVALUATE
-           
-           ACCEPT WS-BUFFER
            .
 
        TICKETING.
@@ -847,10 +1011,9 @@
            DISPLAY "***************************************************"-
            "*************"
            DISPLAY ' '
-           DISPLAY '   BOOKING ID    |                     ORIGIN - DES'-
-           'TINATION                     |             TRAVEL DATE / TI'-
-           'ME             | VEHICLE SERIAL |    SEAT    |     PAID    '-
-           '  | STATUS |'
+           DISPLAY '   BOOKING ID    |         ORIGIN - DESTINATION    '-
+           '            |      TRAVEL DATE / TIME        | VEHICLE SERI'-
+           'AL |    SEAT    |     PAID      | STATUS |'
            DISPLAY '---------------------------------------------------'-
            '-----------------------------------------------------------'
 
@@ -863,30 +1026,32 @@
                READ FS-BOOKING-FILE NEXT RECORD
                AT END MOVE 'Y' TO WS-EOF
                NOT AT END
-                   MOVE FS-FK-SCHEDULE-ID TO FS-SCHEDULE-ID
+                   IF FS-FK-USER-ID = FS-P-USER-ID THEN
+                       MOVE FS-FK-SCHEDULE-ID TO FS-SCHEDULE-ID
 
-                   READ FS-SCHEDULES-FILE
-                       KEY IS FS-SCHEDULE-ID
-                   END-READ
+                       READ FS-SCHEDULES-FILE
+                           KEY IS FS-SCHEDULE-ID
+                       END-READ
+      
+                       MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
+                       MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
+      
+                       READ FS-VEHICLES-FILE
+                           KEY IS FS-VEHICLE-ID
+                       END-READ
+      
+                       READ FS-ROUTES-FILE
+                           KEY IS FS-ROUTE-ID
+                       END-READ
 
-                   MOVE FS-FK-VEHICLE-ID TO FS-VEHICLE-ID
-                   MOVE FS-FK-ROUTE-ID TO FS-ROUTE-ID
-
-                   READ FS-VEHICLES-FILE
-                       KEY IS FS-VEHICLE-ID
-                   END-READ
-
-                   READ FS-ROUTES-FILE
-                       KEY IS FS-ROUTE-ID
-                   END-READ
-
-                   DISPLAY FS-BOOKING-ID ' ' FS-ROUTE-ORIGIN ' TO '
-                        FS-ROUTE-DESTINATION ' ' FS-S-DEPARTURE-TIME 
-                        ' TO ' FS-S-ARRIVAL-TIME '  ' FS-VEHICLE-SERIAL 
-                        ' ' FS-SEAT-NUMBER ' ' FS-PRICE ' ' 
+                   DISPLAY FS-BOOKING-ID ' | ' FS-ROUTE-ORIGIN ' TO '
+                        FS-ROUTE-DESTINATION ' | ' FS-S-DEPARTURE-TIME 
+                        ' TO ' FS-S-ARRIVAL-TIME ' | ' FS-VEHICLE-SERIAL 
+                        ' | ' FS-SEAT-NUMBER ' | ' FS-PRICE ' | ' 
                         FS-BOOKING-STATUS 
                    DISPLAY "-------------------------------------------"-
                    "--------------------"
+                   END-IF
                END-READ
            END-PERFORM
 

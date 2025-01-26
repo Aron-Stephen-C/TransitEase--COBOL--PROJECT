@@ -275,7 +275,10 @@
            STRING "Booking ID: " FS-BOOKING-ID DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
+
            WRITE FS-OUTPUT-RECORD.
+
+           MOVE SPACES TO FS-OUTPUT-RECORD
        
            MOVE "---------------------------------------------------" 
            TO FS-OUTPUT-RECORD
@@ -292,10 +295,14 @@
            END-STRING
            WRITE FS-OUTPUT-RECORD.
 
+           MOVE SPACES TO FS-OUTPUT-RECORD
+
            STRING "Last Name: " FS-P-LAST-NAME DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
            WRITE FS-OUTPUT-RECORD.
+
+           MOVE SPACES TO FS-OUTPUT-RECORD
        
            MOVE " " TO FS-OUTPUT-RECORD
            WRITE FS-OUTPUT-RECORD.
@@ -303,15 +310,20 @@
            MOVE "II. Travel Information" TO FS-OUTPUT-RECORD
            WRITE FS-OUTPUT-RECORD.
 
+
            STRING "Origin: " FS-ROUTE-ORIGIN DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
            WRITE FS-OUTPUT-RECORD.
 
+           MOVE SPACES TO FS-OUTPUT-RECORD
+
            STRING "Destination: " FS-ROUTE-DESTINATION DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
            WRITE FS-OUTPUT-RECORD.
+
+           MOVE SPACES TO FS-OUTPUT-RECORD
        
            STRING "Departure Time: " FS-S-DEPARTURE-TIME 
            DELIMITED BY SIZE 
@@ -319,11 +331,15 @@
            END-STRING
            WRITE FS-OUTPUT-RECORD.
 
+           MOVE SPACES TO FS-OUTPUT-RECORD
+
            STRING "Arrival Time: " FS-S-ARRIVAL-TIME 
            DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
            WRITE FS-OUTPUT-RECORD.
+
+           MOVE SPACES TO FS-OUTPUT-RECORD
        
            STRING "Seat Number: " FS-SEAT-NUMBER 
            DELIMITED BY SIZE 
@@ -331,11 +347,14 @@
            END-STRING
            WRITE FS-OUTPUT-RECORD.
 
+           MOVE SPACES TO FS-OUTPUT-RECORD
+
            STRING "Ticket Price: " FS-PRICE 
            DELIMITED BY SIZE 
            INTO FS-OUTPUT-RECORD
            END-STRING
            WRITE FS-OUTPUT-RECORD.
+
            
            MOVE " " TO FS-OUTPUT-RECORD
            WRITE FS-OUTPUT-RECORD.
