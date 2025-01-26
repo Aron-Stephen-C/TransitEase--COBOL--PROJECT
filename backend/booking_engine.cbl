@@ -663,10 +663,10 @@
                        MOVE FS-SCHEDULE-ID TO 
                        WS-SCHEDULE-TABLE(WS-COUNTER-I)
                        ADD 1 TO WS-SCHEDULE-COUNTER
-                       ADD 1 TO WS-COUNTER-I
+                       ADD 1 TO WS-COUNTER-I    
                    END-IF
+               END-READ
            END-PERFORM
-           DISPLAY 'jaja'
            CLOSE FS-SCHEDULES-FILE
            CLOSE FS-VEHICLES-FILE
            CLOSE FS-ROUTES-FILE
